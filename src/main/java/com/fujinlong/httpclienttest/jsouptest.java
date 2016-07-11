@@ -11,6 +11,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -42,7 +43,7 @@ public class jsouptest {
 		System.out.println(text);
 		//
 
-		doc = Jsoup.parse(text);
+		doc = Jsoup.parse(text,"https://xui.ptlogin2.qq.com");
 	
 		doc.getAllElements().remove(doc.select("script"));
 		Elements elements = doc.select("script");
@@ -52,6 +53,7 @@ public class jsouptest {
 		engine.eval("window.document=new DOMDocument('',dom123)");
 		engine.eval("print(document)");
 		engine.eval("window.location='https://xui.ptlogin2.qq.com'");
+		
 		engine.eval("var kkkk=document.getElementById('u');");
 		engine.eval("kkkk.checked='ddddd';");
 		engine.eval("print(kkkk);");
@@ -60,9 +62,12 @@ public class jsouptest {
 			engine.eval(element2.html());
 
 		}
-	//	engine.eval("document.createElement('img').src='';");
-		engine.eval("loadJs();");
+		engine.eval("print(document.createElement('img')+'xdfsadfsadfsaf888888888');");
+		engine.eval("document.createElement('img').src='';");
+		engine.eval("new Image;");
 		
+		engine.eval("loadJs();");
+		engine.eval("document.getElementById('login_button').click()");
 		
 		/*
 		 * Connection con = Jsoup.connect(url).userAgent(

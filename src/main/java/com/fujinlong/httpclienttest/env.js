@@ -9,9 +9,9 @@
 
 Object.prototype.__defineSetter__=function(name,fun){
 	
-	var d = Object.getOwnPropertyDescriptor(this, name)||{ configurable: true};
-	d.set=fun;
-	Object.defineProperty(this,name,d);
+	var descriptor = Object.getOwnPropertyDescriptor(this, name)||{ configurable: true};
+	descriptor.set=fun;
+	Object.defineProperty(this,name,descriptor);
 };
 
 Object.prototype.__defineGetter__=function(name,fun){
@@ -63,17 +63,14 @@ var window = this;
 
 	
 	window.__defineSetter__("location", function(url){
-		/*var xhr = new XMLHttpRequest();
-		xhr.open("GET", url);
-		xhr.onreadystatechange = function(){
-			curLocation = new java.net.URL( curLocation, url );
-			window.document = xhr.responseXML;
-
-			var event = document.createEvent();
-			event.initEvent("load");
-			window.dispatchEvent( event );
-		};
-		xhr.send();*/
+		/*
+		 * var xhr = new XMLHttpRequest(); xhr.open("GET", url);
+		 * xhr.onreadystatechange = function(){ curLocation = new java.net.URL(
+		 * curLocation, url ); window.document = xhr.responseXML;
+		 * 
+		 * var event = document.createEvent(); event.initEvent("load");
+		 * window.dispatchEvent( event ); }; xhr.send();
+		 */
 		curLocation=new java.net.URL(url);
 		
 		
@@ -111,7 +108,7 @@ var window = this;
 		timers[num] = new java.lang.Thread(new java.lang.Runnable({
 			run: function(){
 				while (true){
-					print(time);
+					//print(time);
 					Packages.java.lang.Thread.sleep(time);
 					fn();
 				}
@@ -163,6 +160,7 @@ var window = this;
 	};
 	
 	window.dispatchEvent = function(event){
+		print(this+" dispatchEvent "+event.type);
 		if ( event.type ) {
 			if ( this.uuid && events[this.uuid][event.type] ) {
 				var self = this;
@@ -216,15 +214,15 @@ var window = this;
 			return new DOMNodeList( ret );
 		},
 		getElementById: function(id){
-			/*var elems = this._dom.getElementsByTagName("*");
+			/*
+			 * var elems = this._dom.getElementsByTagName("*");
+			 * 
+			 * for ( var i = 0; i < elems.length; i++ ) { var elem =
+			 * elems.item(i); if ( elem.getAttribute("id") == id ) return
+			 * makeNode(elem); }
+			 */
 			
-			for ( var i = 0; i < elems.length; i++ ) {
-				var elem = elems.item(i);
-				if ( elem.getAttribute("id") == id )
-					return makeNode(elem);
-			}*/
-			
-			return this._dom.getElementById(id);;
+			return makeNode(this._dom.getElementById(id));
 		},
 		get body(){
 			return this.getElementsByTagName("body")[0];
@@ -373,60 +371,33 @@ var window = this;
 	// DOM Element
 
 	window.DOMElement = function(elem){
+		if(!elem) return;
 		this._dom = elem;
-		this.style = {
-			get opacity(){ return this._opacity; },
-			set opacity(val){ this._opacity = val + ""; }
-		};
+		this.init();
 		
-		// Load CSS info
-		var styles = (this.getAttribute("style") || "").split(/\s*;\s*/);
-		
-		for ( var i = 0; i < styles.length; i++ ) {
-			var style = styles[i].split(/\s*:\s*/);
-			if ( style.length == 2 )
-				this.style[ style[0] ] = style[1];
-		}
-		
-		if ( this.nodeName == "FORM" ) {
-			this.__defineGetter__("elements", function(){
-				return this.getElementsByTagName("*");
-			});
-			
-			this.__defineGetter__("length", function(){
-				var elems = this.elements;
-				for ( var i = 0; i < elems.length; i++ ) {
-					this[i] = elems[i];
-				}
-				
-				return elems.length;
-			});
-		}
-
-		if ( this.nodeName == "SELECT" ) {
-			this.__defineGetter__("options", function(){
-				return this.getElementsByTagName("option");
-			});
-		}
-
-		this.defaultValue = this.value;
 	};
+	
+	
 	
 	DOMElement.prototype = extend( new DOMNode(), {
 		get nodeName(){
-			return this.tagName;
+			return this._dom.nodeName();
 		},
 		get tagName(){
-			return null;
+			return this.nodeName;
 		},
 		toString: function(){
+			return "<" + this.tagName + (this.id ? "#" + this.id : "" ) + ">";
+		},
+		String: function(){
 			return "<" + this.tagName + (this.id ? "#" + this.id : "" ) + ">";
 		},
 		get outerHTML(){
 			var ret = "<" + this.tagName, attr = this.attributes;
 			
-			for ( var i in attr )
+			for ( var i in attr ){
 				ret += " " + i + "='" + attr[i] + "'";
+			}
 				
 			if ( this.childNodes.length || this.nodeName == "SCRIPT" )
 				ret += ">" + this.childNodes.outerHTML + 
@@ -438,10 +409,11 @@ var window = this;
 		},
 		
 		get attributes(){
-			var attr = {}, attrs = this._dom.getAttributes();
-			
-			for ( var i = 0; i < attrs.getLength(); i++ )
-				attr[ attrs.item(i).nodeName ] = attrs.item(i).nodeValue;
+			var attr = {}, attrs = this._dom.attributes().asList();
+
+			for ( var i = 0; i < attrs.size(); i++ ){
+				attr[ attrs.get(i).getKey() ] = attrs.get(i).getValue();
+			}
 				
 			return attr;
 		},
@@ -501,7 +473,7 @@ var window = this;
 			var val = this.getAttribute("checked");
 			return val != "false" && !!val;
 		},
-		set checked(val) { print(this+'checkedcheckedcheckedcheckedcheckedcheckedcheckedchecked');return this.setAttribute("checked",val); },
+		set checked(val) { return this.setAttribute("checked",val); },
 		
 		get selected() {
 			if ( !this._selectDone ) {
@@ -542,7 +514,13 @@ var window = this;
 		get defaultValue() { return this.getAttribute("defaultValue") || ""; },
 		set defaultValue(val) { return this.setAttribute("defaultValue",val); },
 
-		get value() { return this.getAttribute("value") || ""; },
+		get value() { 
+			if(this.getAttribute("value")){
+				return this.getAttribute("value");
+			}else{
+				return "";
+			}
+		},
 		set value(val) { return this.setAttribute("value",val); },
 		
 		get src() { return this.getAttribute("src") || ""; },
@@ -551,12 +529,8 @@ var window = this;
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", val);
 			var self=this;
-			print(this+'imgimgigigiasdfas');
 			xhr.onreadystatechange = function(){
-				print(self+"xxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-				var event = self.createEvent();
-				event.initEvent("load");
-				window.dispatchEvent( event );
+				self.onload && self.onload();
 			};
 			xhr.send();
 			
@@ -573,6 +547,7 @@ var window = this;
 				null;
 		},
 		setAttribute: function(name,value){
+			print(name+"______"+value);
 			this._dom.attr(name,value);
 		},
 		removeAttribute: function(name){
@@ -580,7 +555,7 @@ var window = this;
 		},
 		
 		get childNodes(){
-			return new DOMNodeList( this._dom.getChildNodes() );
+			return new DOMNodeList( this._dom.childNodes() );
 		},
 		get firstChild(){
 			return makeNode( this._dom.getFirstChild() );
@@ -654,8 +629,54 @@ var window = this;
 				return this._doc;
 			} else
 				return null;
+		},
+		init:function(){
+			this.style = {
+					get opacity(){ return this._opacity; },
+					set opacity(val){ this._opacity = val + ""; }
+				};
+				
+				// Load CSS info
+				var styles = (this.getAttribute("style") || "").split(/\s*;\s*/);
+				
+				for ( var i = 0; i < styles.length; i++ ) {
+					var style = styles[i].split(/\s*:\s*/);
+					if ( style.length == 2 )
+						this.style[ style[0] ] = style[1];
+				}
+				
+				if ( this.nodeName == "FORM" ) {
+					this.__defineGetter__("elements", function(){
+						return this.getElementsByTagName("*");
+					});
+					
+					this.__defineGetter__("length", function(){
+						var elems = this.elements;
+						for ( var i = 0; i < elems.length; i++ ) {
+							this[i] = elems[i];
+						}
+						
+						return elems.length;
+					});
+				}
+
+				if ( this.nodeName == "SELECT" ) {
+					this.__defineGetter__("options", function(){
+						return this.getElementsByTagName("option");
+					});
+				}
+
+				this.defaultValue = this.value+"";
+			
 		}
 	});
+	
+	window.Image=function(){
+		this._dom=document._dom.createElement('img');
+		this.init();
+	};
+	
+	Image.prototype =  new DOMElement();
 	
 	// Helper method for extending one object with another
 	
@@ -679,15 +700,19 @@ var window = this;
 	
 	var obj_nodes = new java.util.HashMap();
 	
+	
 	function makeNode(node){
+		
 		if ( node ) {
-			if ( !obj_nodes.containsKey( node ) )
+			
+			if ( !obj_nodes.containsKey( node ) ){
+				//print(node+"_________________makeNode"+"  "+node.getNodeType()+" "+(node.getNodeType() == 1?new DOMElement( node ) :(node.getNodeType() == 8 ?new DOMComment( node ) :new DOMNode( node ))));
 				obj_nodes.put( node, node.getNodeType() == 1?
 					new DOMElement( node ) :
 					node.getNodeType() == 8 ?
 					new DOMComment( node ) :
 					new DOMNode( node ) );
-			
+			}
 			return obj_nodes.get(node);
 		} else
 			return null;
@@ -716,14 +741,11 @@ var window = this;
 		getResponseHeader: function(header){ },
 		send: function(data){
 			var self = this;
-			//print(com.fujinlong.httpclienttest.HttpUtils.get("http://www.baidu.com"));
-			//print(httpClientContext);
+			// print(com.fujinlong.httpclienttest.HttpUtils.get("http://www.baidu.com"));
+			// print(httpClientContext);
 			function makeRequest(){
 				print(curLocation.toString()+self.url);
-				
 				var url = new java.net.URL(curLocation, self.url);
-			
-				
 				if ( url.getProtocol() == "file" ) {
 					if ( self.method == "PUT" ) {
 						var out = new java.io.FileWriter( 
@@ -742,52 +764,57 @@ var window = this;
 						handleResponse();
 					}
 				} else { 
-					var connection = url.openConnection();
+				/*
+				 * var connection = url.openConnection();
+				 * 
+				 * connection.setRequestMethod( self.method ); // Add headers to
+				 * Java connection for (var header in self.headers)
+				 * connection.addRequestProperty(header, self.headers[header]);
+				 * 
+				 * connection.connect(); // Stick the response headers into
+				 * responseHeaders for (var i = 0; ; i++) { var headerName =
+				 * connection.getHeaderFieldKey(i); var headerValue =
+				 * connection.getHeaderField(i); if (!headerName &&
+				 * !headerValue) break; if (headerName)
+				 * self.responseHeaders[headerName] = headerValue; }
+				 */
 					
-					connection.setRequestMethod( self.method );
-					
-					// Add headers to Java connection
-					for (var header in self.headers)
-						connection.addRequestProperty(header, self.headers[header]);
-				
-					connection.connect();
-					
-					// Stick the response headers into responseHeaders
-					for (var i = 0; ; i++) { 
-						var headerName = connection.getHeaderFieldKey(i); 
-						var headerValue = connection.getHeaderField(i); 
-						if (!headerName && !headerValue) break; 
-						if (headerName)
-							self.responseHeaders[headerName] = headerValue;
-					}
+					// print(com.fujinlong.httpclienttest.HttpUtils.get("http://www.baidu.com"));
+					// print(httpClientContext);
 					
 					handleResponse();
 				}
 				
 				function handleResponse(){
-					self.readyState = 4;
-					self.status = parseInt(connection.responseCode) || undefined;
-					self.statusText = connection.responseMessage || "";
+					/*
+					 * self.readyState = 4; self.status =
+					 * parseInt(connection.responseCode) || undefined;
+					 * self.statusText = connection.responseMessage || "";
+					 * 
+					 * var contentEncoding = connection.getContentEncoding() ||
+					 * "utf-8", stream =
+					 * (contentEncoding.equalsIgnoreCase("gzip") ||
+					 * contentEncoding.equalsIgnoreCase("decompress") )? new
+					 * java.util.zip.GZIPInputStream(connection.getInputStream()) :
+					 * connection.getInputStream(), baos = new
+					 * java.io.ByteArrayOutputStream(), buffer =
+					 * java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE,
+					 * 1024), length, responseXML = null;
+					 * 
+					 * while ((length = stream.read(buffer)) != -1) {
+					 * baos.write(buffer, 0, length); }
+					 * 
+					 * baos.close(); stream.close();
+					 */
 
-					var contentEncoding = connection.getContentEncoding() || "utf-8",
-						stream = (contentEncoding.equalsIgnoreCase("gzip") || contentEncoding.equalsIgnoreCase("decompress") )?
-       							new java.util.zip.GZIPInputStream(connection.getInputStream()) :
-       							connection.getInputStream(),
-						baos = new java.io.ByteArrayOutputStream(),
-       						buffer = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024),
-						length,
-						responseXML = null;
-
-					while ((length = stream.read(buffer)) != -1) {
-						baos.write(buffer, 0, length);
-					}
-
-					baos.close();
-					stream.close();
-
-					self.responseText = java.nio.charset.Charset.forName(contentEncoding)
-						.decode(java.nio.ByteBuffer.wrap(baos.toByteArray())).toString();
+					/*
+					 * self.responseText =
+					 * java.nio.charset.Charset.forName(contentEncoding)
+					 * .decode(java.nio.ByteBuffer.wrap(baos.toByteArray())).toString();
+					 */
 					
+					self.responseText=com.fujinlong.httpclienttest.HttpUtils.get(url,httpClientContext);
+					print(self.responseText);
 					self.__defineGetter__("responseXML", function(){
 						return responseXML;
 					});
