@@ -30,6 +30,13 @@ Object.prototype.__lookupGetter__=function(name){
 	return descriptor.get;
 };
 
+Object.defineProperty(Object.prototype,'__defineSetter__',{enumerable: false});
+
+Object.defineProperty(Object.prototype,'__defineGetter__',{enumerable: false});
+Object.defineProperty(Object.prototype,'__lookupSetter__',{enumerable: false});
+
+Object.defineProperty(Object.prototype,'__lookupGetter__',{enumerable: false});
+
 
 
 
@@ -56,7 +63,7 @@ var window = this;
 
 	
 	window.__defineSetter__("location", function(url){
-		var xhr = new XMLHttpRequest();
+		/*var xhr = new XMLHttpRequest();
 		xhr.open("GET", url);
 		xhr.onreadystatechange = function(){
 			curLocation = new java.net.URL( curLocation, url );
@@ -66,7 +73,10 @@ var window = this;
 			event.initEvent("load");
 			window.dispatchEvent( event );
 		};
-		xhr.send();
+		xhr.send();*/
+		curLocation=new java.net.URL(url);
+		
+		
 	});
 	
 	window.__defineGetter__("location", function(url){
@@ -206,15 +216,15 @@ var window = this;
 			return new DOMNodeList( ret );
 		},
 		getElementById: function(id){
-			var elems = this._dom.getElementsByTagName("*");
+			/*var elems = this._dom.getElementsByTagName("*");
 			
 			for ( var i = 0; i < elems.length; i++ ) {
 				var elem = elems.item(i);
 				if ( elem.getAttribute("id") == id )
 					return makeNode(elem);
-			}
+			}*/
 			
-			return null;
+			return this._dom.getElementById(id);;
 		},
 		get body(){
 			return this.getElementsByTagName("body")[0];
@@ -283,10 +293,10 @@ var window = this;
 	
 	window.DOMNodeList = function(list){
 		this._dom = list;
-		this.length = list.getLength();
+		this.length = list.size();
 		
 		for ( var i = 0; i < this.length; i++ ) {
-			var node = list.item(i);
+			var node = list.get(i);
 			this[i] = makeNode( node );
 		}
 	};
@@ -319,7 +329,7 @@ var window = this;
 			return this._dom.getNodeName();
 		},
 		get childNodes(){
-			return new DOMNodeList( this._dom.getChildNodes() );
+			return new DOMNodeList( this._dom.childNodes() );
 		},
 		cloneNode: function(deep){
 			return makeNode( this._dom.cloneNode(deep) );
@@ -491,7 +501,7 @@ var window = this;
 			var val = this.getAttribute("checked");
 			return val != "false" && !!val;
 		},
-		set checked(val) { return this.setAttribute("checked",val); },
+		set checked(val) { print(this+'checkedcheckedcheckedcheckedcheckedcheckedcheckedchecked');return this.setAttribute("checked",val); },
 		
 		get selected() {
 			if ( !this._selectDone ) {
@@ -536,7 +546,23 @@ var window = this;
 		set value(val) { return this.setAttribute("value",val); },
 		
 		get src() { return this.getAttribute("src") || ""; },
-		set src(val) { return this.setAttribute("src",val); },
+		
+		set src(val) { 
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", val);
+			var self=this;
+			print(this+'imgimgigigiasdfas');
+			xhr.onreadystatechange = function(){
+				print(self+"xxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+				var event = self.createEvent();
+				event.initEvent("load");
+				window.dispatchEvent( event );
+			};
+			xhr.send();
+			
+			return this.setAttribute("src",val);
+		
+		},
 		
 		get id() { return this.getAttribute("id") || ""; },
 		set id(val) { return this.setAttribute("id",val); },
@@ -690,9 +716,13 @@ var window = this;
 		getResponseHeader: function(header){ },
 		send: function(data){
 			var self = this;
-			
+			//print(com.fujinlong.httpclienttest.HttpUtils.get("http://www.baidu.com"));
+			//print(httpClientContext);
 			function makeRequest(){
+				print(curLocation.toString()+self.url);
+				
 				var url = new java.net.URL(curLocation, self.url);
+			
 				
 				if ( url.getProtocol() == "file" ) {
 					if ( self.method == "PUT" ) {

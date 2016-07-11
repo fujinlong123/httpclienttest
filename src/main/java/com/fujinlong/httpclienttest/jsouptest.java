@@ -25,9 +25,11 @@ public class jsouptest {
 		NashornScriptEngine engine = (NashornScriptEngine) manager.getEngineByName("javascript");
 		engine.compile(new FileReader(new File(jsouptest.class.getResource("env.js").getPath()))).eval();
 
-
+		
+		
 		HttpClientContext context = HttpClientContext.create();
-
+		//engine.put("HttpUtils", "com.fujinlong.httpclienttest.HttpUtils");
+		engine.put("httpClientContext", context);
 		String url = "https://mail.qq.com";
 
 		String text = HttpUtils.get(url, context);
@@ -49,12 +51,19 @@ public class jsouptest {
 		engine.put("dom123", doc);
 		engine.eval("window.document=new DOMDocument('',dom123)");
 		engine.eval("print(document)");
+		engine.eval("window.location='https://xui.ptlogin2.qq.com'");
+		engine.eval("var kkkk=document.getElementById('u');");
+		engine.eval("kkkk.checked='ddddd';");
+		engine.eval("print(kkkk);");
 		for (Element element2 : elements) {
 			System.out.println(element2.outerHtml());
 			engine.eval(element2.html());
 
 		}
-
+	//	engine.eval("document.createElement('img').src='';");
+		engine.eval("loadJs();");
+		
+		
 		/*
 		 * Connection con = Jsoup.connect(url).userAgent(
 		 * "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36"

@@ -1,6 +1,8 @@
 package com.fujinlong.httpclienttest;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -36,13 +38,24 @@ public class HttpUtils {
 		return get(url,null);
 	}
 
+	public static String get(URI url) throws ClientProtocolException, IOException {
+		return get(url,null);
+	}
 	
 	public static String get(String url,HttpClientContext context) throws ClientProtocolException, IOException {
+
 		HttpGet get = new HttpGet(url);
 		String text=client.execute(get, responseHandler,context);
 		
 		return text;
 	}
 	
+	public static String get(URI url,HttpClientContext context) throws ClientProtocolException, IOException {
+
+		HttpGet get = new HttpGet(url);
+		String text=client.execute(get, responseHandler,context);
+		
+		return text;
+	}
 
 }
