@@ -4,8 +4,8 @@
  * Copyright 2008 John Resig, under the MIT License
  */
 
-
-
+var CookieUtils = Java.type("com.fujinlong.httpclienttest.CookieUtils");
+var JsBeauty=Java.type("com.fujinlong.httpclienttest.JsBeauty");
 
 Object.prototype.__defineSetter__=function(name,fun){
 	
@@ -38,6 +38,8 @@ Object.defineProperty(Object.prototype,'__lookupSetter__',{enumerable: false});
 Object.defineProperty(Object.prototype,'__lookupGetter__',{enumerable: false});
 
 
+String.prototype.match=function(regex){return regex.exec(this);};
+
 
 
 // The window Object
@@ -57,22 +59,27 @@ var window = this;
 		}
 	};
 	
-	var curLocation = (new java.io.File("./")).toURL();
+	var curLocation ;
 	
 	
 
 	
 	window.__defineSetter__("location", function(url){
-		/*
-		 * var xhr = new XMLHttpRequest(); xhr.open("GET", url);
-		 * xhr.onreadystatechange = function(){ curLocation = new java.net.URL(
-		 * curLocation, url ); window.document = xhr.responseXML;
-		 * 
-		 * var event = document.createEvent(); event.initEvent("load");
-		 * window.dispatchEvent( event ); }; xhr.send();
-		 */
-		curLocation=new java.net.URL(url);
 		
+		  var xhr = new XMLHttpRequest(); 
+		  xhr.open("GET", url,false);
+		  curLocation=new java.net.URL(url);
+		  xhr.onreadystatechange = function(){ 
+			  curLocation = new java.net.URL(url); 
+			  print("网页内容："+xhr.responseText);
+			  var dom=org.jsoup.Jsoup.parse(xhr.responseText,url);
+			  window.document = new DOMDocument(xhr.responseText,dom);
+			  com.fujinlong.httpclienttest.jsExec.exec(curLocation,dom,httpClientContext,jsEngine)
+			  var event = document.createEvent(); 
+			  event.initEvent("load");
+			  window.dispatchEvent( event ); 
+		  };
+		  xhr.send();
 		
 	});
 	
@@ -108,7 +115,7 @@ var window = this;
 		timers[num] = new java.lang.Thread(new java.lang.Runnable({
 			run: function(){
 				while (true){
-					//print(time);
+					// print(time);
 					Packages.java.lang.Thread.sleep(time);
 					fn();
 				}
@@ -160,7 +167,6 @@ var window = this;
 	};
 	
 	window.dispatchEvent = function(event){
-		print(this+" dispatchEvent "+event.type);
 		if ( event.type ) {
 			if ( this.uuid && events[this.uuid][event.type] ) {
 				var self = this;
@@ -214,21 +220,15 @@ var window = this;
 			return new DOMNodeList( ret );
 		},
 		getElementById: function(id){
-			/*
-			 * var elems = this._dom.getElementsByTagName("*");
-			 * 
-			 * for ( var i = 0; i < elems.length; i++ ) { var elem =
-			 * elems.item(i); if ( elem.getAttribute("id") == id ) return
-			 * makeNode(elem); }
-			 */
-			
-			return makeNode(this._dom.getElementById(id));
+			print("选择id为"+id+"的元素");
+			print(this._dom.select("#"+id).first());
+			return makeNode(this._dom.select("#"+id).first());
 		},
 		get body(){
 			return this.getElementsByTagName("body")[0];
 		},
 		get documentElement(){
-			return makeNode( this._dom.getDocumentElement() );
+			return makeNode( this._dom );
 		},
 		get ownerDocument(){
 			return null;
@@ -280,6 +280,12 @@ var window = this;
 		},
 		write:function(o){
 			print("document.write:"+o);
+		},
+		get cookie(){
+			return CookieUtils.toStr(httpClientContext);
+		},
+		get location(){
+			return window.location;
 		}
 	};
 	
@@ -533,9 +539,7 @@ var window = this;
 				self.onload && self.onload();
 			};
 			xhr.send();
-			
 			return this.setAttribute("src",val);
-		
 		},
 		
 		get id() { return this.getAttribute("id") || ""; },
@@ -702,11 +706,10 @@ var window = this;
 	
 	
 	function makeNode(node){
-		
 		if ( node ) {
-			
+
 			if ( !obj_nodes.containsKey( node ) ){
-				//print(node+"_________________makeNode"+"  "+node.getNodeType()+" "+(node.getNodeType() == 1?new DOMElement( node ) :(node.getNodeType() == 8 ?new DOMComment( node ) :new DOMNode( node ))));
+
 				obj_nodes.put( node, node.getNodeType() == 1?
 					new DOMElement( node ) :
 					node.getNodeType() == 8 ?
@@ -729,8 +732,9 @@ var window = this;
 	XMLHttpRequest.prototype = {
 		open: function(method, url, async, user, password){ 
 			this.readyState = 1;
-			if (async)
+			if (async){
 				this.async = true;
+			}
 			this.method = method || "GET";
 			this.url = url;
 			this.onreadystatechange();
@@ -744,7 +748,6 @@ var window = this;
 			// print(com.fujinlong.httpclienttest.HttpUtils.get("http://www.baidu.com"));
 			// print(httpClientContext);
 			function makeRequest(){
-				print(curLocation.toString()+self.url);
 				var url = new java.net.URL(curLocation, self.url);
 				if ( url.getProtocol() == "file" ) {
 					if ( self.method == "PUT" ) {
@@ -814,30 +817,40 @@ var window = this;
 					 */
 					
 					self.responseText=com.fujinlong.httpclienttest.HttpUtils.get(url,httpClientContext);
-					print(self.responseText);
-					self.__defineGetter__("responseXML", function(){
-						return responseXML;
-					});
-					
-					if ( self.responseText.match(/^\s*</) ) {
-						try {
+					print(url.toString());
+					if(url.getPath().endsWith(".js")){
+						try{
+							jsEngine.eval(JsBeauty.beauty(self.responseText));
+						}catch(e){		
+							print(JsBeauty.beauty(self.responseText));
+							throw e;
+						}
+					}
+				
+					var regex= /^\s*</;
+			
+					if ( regex.test(self.responseText) ){
+						/*try {
 							responseXML = new DOMDocument(
 								new java.io.ByteArrayInputStream(
 									(new java.lang.String(
 										self.responseText)).getBytes("UTF8")));
-						} catch(e) {}
+						} catch(e) {}*/
 					}
 				}
 				
 				self.onreadystatechange();
 			}
 
-			if (this.async)
+			if (this.async){
+			
 				(new java.lang.Thread(new java.lang.Runnable({
 					run: makeRequest
 				}))).start();
-			else
+			}	
+			else{
 				makeRequest();
+			}
 		},
 		abort: function(){},
 		onreadystatechange: function(){},
@@ -869,7 +882,7 @@ var window = this;
 				return returnedHeaders.join("\r\n");
 			}
 		},
-		async: true,
+		async: false,
 		readyState: 0,
 		responseText: "",
 		status: 0

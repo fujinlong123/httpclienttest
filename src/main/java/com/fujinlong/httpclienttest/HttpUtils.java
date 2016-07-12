@@ -19,7 +19,7 @@ import org.apache.http.util.EntityUtils;
 
 public class HttpUtils {
 	private static String userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36";
-	private static RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.DEFAULT).build();
+	private static RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
 	private static CloseableHttpClient client = HttpClients.custom().setMaxConnTotal(100).setMaxConnPerRoute(20)
 			.setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
 

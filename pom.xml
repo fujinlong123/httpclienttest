@@ -28,11 +28,15 @@
 			<artifactId>httpclient</artifactId>
 			<version>4.5.2</version>
 		</dependency>
-
 		<dependency>
-			<groupId>org.jsoup</groupId>
-			<artifactId>jsoup</artifactId>
-			<version>1.9.2</version>
+			<groupId>org.webjars</groupId>
+			<artifactId>zxcvbn</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.13</version>
 		</dependency>
 
 	</dependencies>

@@ -691,18 +691,4 @@ public abstract class Node implements Cloneable {
             }
         }
     }
-    
-    public int getNodeType(){
-    	if(this instanceof Element){
-    		return 1;
-    	}
-  
-    	if(this instanceof Comment){
-    		return 8;
-    	}
-    	return 0;
-    }
-    
-    
-    
 }
