@@ -60,7 +60,7 @@ final class CharacterReader {
 
     String consumeAsString() {
         return new String(input, pos++, 1);
-    }
+    } 
 
     /**
      * Returns the number of characters between the current position and the next instance of the input char
