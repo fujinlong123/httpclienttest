@@ -18,7 +18,7 @@ public class JsBeauty {
 	public static String beauty(String src) throws FileNotFoundException, ScriptException {
 		ScriptEngineManager manager = new ScriptEngineManager();
 		NashornScriptEngine engine = (NashornScriptEngine) manager.getEngineByName("javascript");
-		engine.compile(new FileReader(new File(jsouptest.class.getResource("jsbeauty.js").getPath()))).eval();
+		engine.compile(new FileReader(new File(QQMailLoginExample.class.getResource("jsbeauty.js").getPath()))).eval();
 		engine.put("srcJs", src);
 		engine.eval("var target=js_beautify(srcJs);");
 		Object o = engine.get("target");

@@ -5,7 +5,7 @@ var BindFormToDocument=Java.type("com.fujinlong.httpclienttest.BindFormToDocumen
 var SaveImg=Java.type("com.fujinlong.httpclienttest.SaveImg");
 
 var Kkk=Java.type("com.fujinlong.httpclienttest.Kkk");
-var StringResponse=Java.type("com.fujinlong.httpclienttest.StringResponse");
+var ObjectResponse=Java.type("com.fujinlong.httpclienttest.ObjectResponse");
 
 
 
@@ -100,9 +100,7 @@ var events = [{}];
 		  curLocation=new java.net.URL(url);
 		  xhr.onreadystatechange = function(){ 
 			  curLocation = new java.net.URL(url); 
-			  print("网页内容："+xhr.responseText);
 			  var dom=org.jsoup.Jsoup.parse(xhr.responseText,url);
-			  windowDom=dom;
 			  window.document = new DOMDocument(xhr.responseText,dom);
 			  com.fujinlong.httpclienttest.jsExec.exec(curLocation,dom,httpClientContext,jsEngine);
 			  BindFormToDocument.bind(dom,jsEngine);
@@ -130,9 +128,7 @@ var events = [{}];
 				  curLocation=new java.net.URL(url);
 				  xhr.onreadystatechange = function(){ 
 					  curLocation = new java.net.URL(url); 
-					  print("网页内容："+xhr.responseText);
 					  var dom=org.jsoup.Jsoup.parse(xhr.responseText,url);
-					  windowDom=dom;
 					  window.document = new DOMDocument(xhr.responseText,dom);
 					  com.fujinlong.httpclienttest.jsExec.exec(curLocation,dom,httpClientContext,jsEngine);
 					  BindFormToDocument.bind(dom,jsEngine);
@@ -156,14 +152,14 @@ var events = [{}];
 	var timers = [];
 	
 	window.setTimeout = function(fn, time){
-		print("延时执行："+fn);
+		// print("延时执行："+fn);
 		var num;
 		return num = setInterval(function(){
 			if(typeof fn==='string'){
-				print("延时执行xxxxx"+fn);
+				// print("延时执行xxxxx"+fn);
 				jsEngine.eval(fn);
 			}else{
-				print("延时执行notString"+fn);
+				// print("延时执行notString"+fn);
 				fn();
 			}
 			clearInterval(num);
@@ -171,7 +167,7 @@ var events = [{}];
 	};
 	
 	window.setInterval = function(fn, time){
-		print("延时执行setInterval："+fn);
+		// print("延时执行setInterval："+fn);
 		var num = timers.length;
 		
 		timers[num] = new java.lang.Thread(new java.lang.Runnable({
@@ -190,7 +186,7 @@ var events = [{}];
 	};
 	
 	window.clearTimeout=function(timeout){
-		print("清除timeout"+timeout);
+		// print("清除timeout"+timeout);
 		if(timeout){
 			try{
 				timers[timeout].stop();
@@ -213,7 +209,7 @@ var events = [{}];
 	
 
 	window.addEventListener = function(type, fn){
-		print("添加事件："+type+"__"+this+"__"+fn);
+		// print("添加事件："+type+"__"+this+"__"+fn);
 		if ( !this.uuid || this == window ) {
 			this.uuid = events.length;
 			events[this.uuid] = {};
@@ -243,7 +239,7 @@ var events = [{}];
 	
 	window.dispatchEvent = function(event){
 		
-		print("分发事件："+event.type+"this.uuid:"+this.uuid+"event:"+events[this.uuid]);
+		// print("分发事件："+event.type+"this.uuid:"+this.uuid+"event:"+events[this.uuid]);
 		if ( event.type ) {
 			if ( this.uuid && events[this.uuid][event.type] ) {
 				var self = this;
@@ -299,12 +295,12 @@ var events = [{}];
 			return new DOMNodeList( ret );
 		},
 		getElementById: function(id){
-			print("选择id为"+id+"的元素");
+			// print("选择id为"+id+"的元素");
 			
 			if(id==='auth_low_login_enable'){
 				id='auth_low_login_box';
 			}
-			//print(this._dom.select("#"+id).first());
+			// print(this._dom.select("#"+id).first());
 			return makeNode(this._dom.select("#"+id).first());
 		},
 		get body(){
@@ -318,9 +314,6 @@ var events = [{}];
 		removeEventListener: window.removeEventListener,
 		dispatchEvent: window.dispatchEvent,
 		attachEvent:window.addEventListener,
-		get nodeName() {
-			return "#document";
-		},
 		importNode: function(node, deep){
 			return makeNode( this._dom.importNode(node._dom, deep) );
 		},
@@ -362,7 +355,7 @@ var events = [{}];
 			};
 		},
 		write:function(o){
-			print("document.write:"+o);
+			this._dom.append(o);
 		},
 		get cookie(){
 			return CookieUtils.toStr(httpClientContext);
@@ -371,7 +364,7 @@ var events = [{}];
 			return window.location;
 		},
 		get ownerDocument(){
-			print(this+'ownerDocument:'+this._dom.ownerDocument());
+			// print(this+'ownerDocument:'+this._dom.ownerDocument());
 			return makeNode(this._dom.ownerDocument());
 		},
 	};
@@ -413,9 +406,7 @@ var events = [{}];
 		get nodeType(){
 			return this._dom.getNodeType();
 		},
-		get nodeName() {
-			return this._dom.getNodeName();
-		},
+		
 		get childNodes(){
 			return new DOMNodeList( this._dom.childNodes() );
 		},
@@ -423,7 +414,7 @@ var events = [{}];
 			return makeNode( this._dom.cloneNode(deep) );
 		},
 		get ownerDocument(){
-			print(this+'ownerDocument:'+this._dom.ownerDocument());
+			//print(this+'ownerDocument:'+this._dom.ownerDocument());
 			return makeNode( this._dom.ownerDocument() );
 		},
 		get documentElement(){
@@ -484,7 +475,7 @@ var events = [{}];
 						this.style[ style[0] ] = style[1];
 				}
 				
-				if ( this.nodeName == "FORM" ) {
+				if ( this.tagName == "FORM" ) {
 					this.__defineGetter__("elements", function(){
 						return this.getElementsByTagName("*");
 					});
@@ -499,7 +490,7 @@ var events = [{}];
 					});
 				}
 
-				if ( this.nodeName == "SELECT" ) {
+				if ( this.tagName == "SELECT" ) {
 					this.__defineGetter__("options", function(){
 						return this.getElementsByTagName("option");
 					});
@@ -508,11 +499,8 @@ var events = [{}];
 				this.defaultValue = this.value+"";
 			
 		},
-		get nodeName(){
-			return this._dom.nodeName();
-		},
 		get tagName(){
-			return this._dom.tagName();
+			return this._dom.tagName().toLocaleUpperCase();
 		},
 		toString: function(){
 			return "<" + this.tagName + (this.id ? "#" + this.id : "" ) + ">";
@@ -527,7 +515,7 @@ var events = [{}];
 				ret += " " + i + "='" + attr[i] + "'";
 			}
 				
-			if ( this.childNodes.length || this.nodeName == "SCRIPT" )
+			if ( this.childNodes.length || this.tagName == "SCRIPT" )
 				ret += ">" + this.childNodes.outerHTML + 
 					"</" + this.tagName + ">";
 			else
@@ -609,7 +597,7 @@ var events = [{}];
 			if ( !this._selectDone ) {
 				this._selectDone = true;
 				
-				if ( this.nodeName == "OPTION" && !this.parentNode.getAttribute("multiple") ) {
+				if ( this.tagName == "OPTION" && !this.parentNode.getAttribute("multiple") ) {
 					var opt = this.parentNode.getElementsByTagName("option");
 					
 					if ( this == opt[0] ) {
@@ -656,21 +644,18 @@ var events = [{}];
 		get src() { return this.getAttribute("src") || ""; },
 		
 		set src(val) { 
-			print("设置Src:"+this.tagName+":"+val);
+			// print("设置Src:"+this.tagName+":"+val);
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", val);
-			if(this.getAttribute("id")==verifyimgId){
-				print("设置congtentType:");
-				xhr.contentType='img';
-			}
 			var self=this;
 			xhr.onreadystatechange = function(){
 				self.onload && self.onload();
-				if(self.getAttribute("id")==verifyimgId){
-					Kkk.needVerify=true;
-					self.verifyimgNotify();
-					SaveImg.save(xhr.responseImg,val);
+				// print("val.hashCode()"+val.hashCode());
+				//print("self.tagName"+self.tagName)
+				if(self.tagName=='IMG'){
+					SaveImg.save(xhr.responseText,val.hashCode()+"",val);
 				}
+				
 			};
 			xhr.send();
 			return this.setAttribute("src",val);
@@ -690,7 +675,7 @@ var events = [{}];
 				null;
 		},
 		setAttribute: function(name,value){
-			print(name+"______"+value);
+			// print(name+"______"+value);
 			if(value){value=value+""};
 			this._dom.attr(name,value);
 		},
@@ -716,7 +701,7 @@ var events = [{}];
 			execScripts( node );
 			
 			function execScripts( node ) {
-				if ( node.nodeName == "SCRIPT" ) {
+				if ( node.tagName == "SCRIPT" ) {
 					if ( !node.getAttribute("src") ) {
 						eval.call( window, node.textContent );
 					}
@@ -758,13 +743,23 @@ var events = [{}];
 			event.initEvent("blur");
 			this.dispatchEvent(event);
 		},
+		keydown: function(){
+			var event = document.createEvent();
+			event.initEvent("keydown");
+			this.dispatchEvent(event);
+		},
+		keyup: function(){
+			var event = document.createEvent();
+			event.initEvent("keyup");
+			this.dispatchEvent(event);
+		},
 		get contentWindow(){
-			return this.nodeName == "IFRAME" ? {
+			return this.tagName == "IFRAME" ? {
 				document: this.contentDocument
 			} : null;
 		},
 		get contentDocument(){
-			if ( this.nodeName == "IFRAME" ) {
+			if ( this.tagName == "IFRAME" ) {
 				if ( !this._doc )
 					this._doc = new DOMDocument(
 						new java.io.ByteArrayInputStream((new java.lang.String(
@@ -852,90 +847,43 @@ var events = [{}];
 						handleResponse();
 					}
 				} else { 
-				/*
-				 * var connection = url.openConnection();
-				 * 
-				 * connection.setRequestMethod( self.method ); // Add headers to
-				 * Java connection for (var header in self.headers)
-				 * connection.addRequestProperty(header, self.headers[header]);
-				 * 
-				 * connection.connect(); // Stick the response headers into
-				 * responseHeaders for (var i = 0; ; i++) { var headerName =
-				 * connection.getHeaderFieldKey(i); var headerValue =
-				 * connection.getHeaderField(i); if (!headerName &&
-				 * !headerValue) break; if (headerName)
-				 * self.responseHeaders[headerName] = headerValue; }
-				 */
-					
-					// print(com.fujinlong.httpclienttest.HttpUtils.get("http://www.baidu.com"));
-					// print(httpClientContext);
 					handleResponse();
 				}
 				
 				function handleResponse(){
-					/*
-					 * self.readyState = 4; self.status =
-					 * parseInt(connection.responseCode) || undefined;
-					 * self.statusText = connection.responseMessage || "";
-					 * 
-					 * var contentEncoding = connection.getContentEncoding() ||
-					 * "utf-8", stream =
-					 * (contentEncoding.equalsIgnoreCase("gzip") ||
-					 * contentEncoding.equalsIgnoreCase("decompress") )? new
-					 * java.util.zip.GZIPInputStream(connection.getInputStream()) :
-					 * connection.getInputStream(), baos = new
-					 * java.io.ByteArrayOutputStream(), buffer =
-					 * java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE,
-					 * 1024), length, responseXML = null;
-					 * 
-					 * while ((length = stream.read(buffer)) != -1) {
-					 * baos.write(buffer, 0, length); }
-					 * 
-					 * baos.close(); stream.close();
-					 */
-
-					/*
-					 * self.responseText =
-					 * java.nio.charset.Charset.forName(contentEncoding)
-					 * .decode(java.nio.ByteBuffer.wrap(baos.toByteArray())).toString();
-					 */
-					var stringResponse=null;
+					var response
 					try{
-						if(self.contentType=='img'){
-							self.responseImg=com.fujinlong.httpclienttest.HttpUtils.getImg(url,httpClientContext);
+						print('请求链接：'+url.toString());
+						response=com.fujinlong.httpclienttest.HttpUtils.get(url,httpClientContext);
+						print("xxxxxxxxxxxxxxxxx");
+						if(response.isString()){
+							self.responseText=response.getStringResponseBody();
+							print("请求内容："+response.getCharset()+":"+self.responseText);
+						}else if(response.isBinary()){
+							self.responseText=response.getBinaryResponseBody();
 						}else{
-							stringResponse= com.fujinlong.httpclienttest.HttpUtils.get(url,httpClientContext);
-							self.responseText=stringResponse.getResponseBody();
-							print("请求连接："+url.toString());
-							if(!(stringResponse!=null&&stringResponse.getMimeType()=='image/bmp')){
-								print("请求内容："+self.responseText);
-							}
+							throw new Exception('未知结果类型');
 						}
 						
+					
+
 					}catch(e){
-						//print("加载连接出错："+url.toString());
-						//print("出错原因："+e);
+						// print("加载连接出错："+url.toString());
+						// print("出错原因："+e);
+						e.printStackTrace();
 					}
 					
-					//application/x-javascript
-					if(url.getPath().endsWith(".js")||(stringResponse!=null&&stringResponse.getMimeType()=='application/x-javascript')){
+					// application/x-javascript
+					if(url.getPath().endsWith(".js")||(response!=null&&response.getMimeType()=='application/x-javascript')){
 						try{
 							jsEngine.eval(JsBeauty.beauty(self.responseText));
 						}catch(e){		
-							print(JsBeauty.beauty(self.responseText));
+							 print(JsBeauty.beauty(self.responseText));
 							throw e;
 						}
 					}
 				
-					var regex= /^\s*</;
-			
-					if ( regex.test(self.responseText) ){
-						/*
-						 * try { responseXML = new DOMDocument( new
-						 * java.io.ByteArrayInputStream( (new java.lang.String(
-						 * self.responseText)).getBytes("UTF8"))); } catch(e) {}
-						 */
-					}
+					
 				}
 				
 				self.onreadystatechange();

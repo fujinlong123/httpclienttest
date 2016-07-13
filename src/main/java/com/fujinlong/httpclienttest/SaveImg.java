@@ -8,14 +8,13 @@ import java.util.Date;
 import org.apache.commons.io.FileUtils;
 
 public class SaveImg {
-	public static void save(Object btytes,String src){
-		System.out.println("保存图片："+src);
-		SimpleDateFormat sdf =new SimpleDateFormat("yyyyMMddHHmmss");
-		String verifyPath="D:/test/verifyImg"+sdf.format(new Date())+".jpg";
+	public static void save(Object btytes,Object name,String src){
+		System.out.println("图片Src:"+src);
+
+		String verifyPath="D:/test/verifyImg"+name+".jpg";
 		try {
 			FileUtils.writeByteArrayToFile(new File(verifyPath), (byte[]) btytes);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
