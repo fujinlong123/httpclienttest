@@ -92,24 +92,13 @@ var events = [{}];
 	var curLocation ;
 	
 	
+	
+	
+	
 
 	
-	window.__defineSetter__("location", function(url){
-		  var xhr = new XMLHttpRequest(); 
-		  xhr.open("GET", url,false);
-		  curLocation=new java.net.URL(url);
-		  xhr.onreadystatechange = function(){ 
-			  curLocation = new java.net.URL(url); 
-			  var dom=org.jsoup.Jsoup.parse(xhr.responseText,url);
-			  window.document = new DOMDocument(xhr.responseText,dom);
-			  com.fujinlong.httpclienttest.jsExec.exec(curLocation,dom,httpClientContext,jsEngine);
-			  BindFormToDocument.bind(dom,jsEngine);
-			  var event = document.createEvent(); 
-			  event.initEvent("load");
-			  window.dispatchEvent( event ); 
-		  };
-
-		  xhr.send();
+	window.__defineSetter__("location", function(link){
+						this.location.href=link;
 		
 	});
 	
@@ -121,14 +110,19 @@ var events = [{}];
 			get href(){
 				return curLocation.toString();
 			},
-			set href(url){
+			set href(link){
 				var xhr = new XMLHttpRequest(); 
-				  xhr.open("GET", url,false);
-				  print("打开："+url);
-				  curLocation=new java.net.URL(url);
+				var tempUrl;
+				if(curLocation&&!link.startsWith('http://')&&!link.startsWith('https://')){
+					tempUrl=new java.net.URL(curLocation,link);
+				}else{
+					tempUrl=new java.net.URL(link);
+				}
+				  xhr.open("GET", tempUrl.toString(),false);
+				//  print("打开："+tempUrl.toString());
 				  xhr.onreadystatechange = function(){ 
-					  curLocation = new java.net.URL(url); 
-					  var dom=org.jsoup.Jsoup.parse(xhr.responseText,url);
+					  curLocation = tempUrl; 
+					  var dom=org.jsoup.Jsoup.parse(xhr.responseText,tempUrl.toString());
 					  window.document = new DOMDocument(xhr.responseText,dom);
 					  com.fujinlong.httpclienttest.jsExec.exec(curLocation,dom,httpClientContext,jsEngine);
 					  BindFormToDocument.bind(dom,jsEngine);
@@ -143,6 +137,12 @@ var events = [{}];
 			},
 			toString: function(){
 				return this.href;
+			},
+			replace:function(link){
+				this.href=link;
+			},
+			get hash(){
+				return curLocation.getRef();
 			}
 		};
 	});
@@ -152,11 +152,11 @@ var events = [{}];
 	var timers = [];
 	
 	window.setTimeout = function(fn, time){
-		// print("延时执行："+fn);
+		 //print("延时执行："+fn);
 		var num;
 		return num = setInterval(function(){
 			if(typeof fn==='string'){
-				// print("延时执行xxxxx"+fn);
+				 //print("延时执行xxxxx"+fn);
 				jsEngine.eval(fn);
 			}else{
 				// print("延时执行notString"+fn);
@@ -167,7 +167,7 @@ var events = [{}];
 	};
 	
 	window.setInterval = function(fn, time){
-		// print("延时执行setInterval："+fn);
+		 //print("执行setInterval："+fn);
 		var num = timers.length;
 		
 		timers[num] = new java.lang.Thread(new java.lang.Runnable({
@@ -414,7 +414,7 @@ var events = [{}];
 			return makeNode( this._dom.cloneNode(deep) );
 		},
 		get ownerDocument(){
-			//print(this+'ownerDocument:'+this._dom.ownerDocument());
+			// print(this+'ownerDocument:'+this._dom.ownerDocument());
 			return makeNode( this._dom.ownerDocument() );
 		},
 		get documentElement(){
@@ -651,7 +651,7 @@ var events = [{}];
 			xhr.onreadystatechange = function(){
 				self.onload && self.onload();
 				// print("val.hashCode()"+val.hashCode());
-				//print("self.tagName"+self.tagName)
+				// print("self.tagName"+self.tagName)
 				if(self.tagName=='IMG'){
 					SaveImg.save(xhr.responseText,val.hashCode()+"",val);
 				}
@@ -810,13 +810,13 @@ var events = [{}];
 	};
 	
 	XMLHttpRequest.prototype = {
-		open: function(method, url, async, user, password){ 
+		open: function(method, link, async, user, password){ 
 			this.readyState = 1;
 			if (async){
 				this.async = true;
 			}
 			this.method = method || "GET";
-			this.url = url;
+			this.url = link;
 			this.onreadystatechange();
 		},
 		setRequestHeader: function(header, value){
@@ -828,7 +828,15 @@ var events = [{}];
 			// print(com.fujinlong.httpclienttest.HttpUtils.get("http://www.baidu.com"));
 			// print(httpClientContext);
 			function makeRequest(){
-				var url = new java.net.URL(curLocation, self.url);
+				
+				var url;
+				if(curLocation){
+					url=new java.net.URL(curLocation, self.url);
+				}else{
+					url=new java.net.URL(self.url);
+				}
+					
+					
 				if ( url.getProtocol() == "file" ) {
 					if ( self.method == "PUT" ) {
 						var out = new java.io.FileWriter( 
@@ -855,7 +863,11 @@ var events = [{}];
 					try{
 						print('请求链接：'+url.toString());
 						response=com.fujinlong.httpclienttest.HttpUtils.get(url,httpClientContext);
-						print("xxxxxxxxxxxxxxxxx");
+						if(302==response.getStatusCode()){
+							print('页面跳转到：'+response.getLastHeaderValue('Location'));
+							window.location.href=response.getLastHeaderValue('Location');
+						}
+						
 						if(response.isString()){
 							self.responseText=response.getStringResponseBody();
 							print("请求内容："+response.getCharset()+":"+self.responseText);

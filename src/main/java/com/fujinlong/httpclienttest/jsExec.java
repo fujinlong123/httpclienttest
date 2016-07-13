@@ -1,5 +1,6 @@
 package com.fujinlong.httpclienttest;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -18,28 +19,35 @@ import jdk.nashorn.api.scripting.NashornScriptEngine;
 public class jsExec {
 	public static void exec(URL baseUrl, Document doc, HttpClientContext context, NashornScriptEngine jsEngine) {
 		Elements eles = doc.getElementsByTag("script");
-		
+		String js="";
 		for (Element element : eles) {
 			try {
 				if (!StringUtil.isBlank(element.attr("src"))) {
 					URL url =new URL(baseUrl, element.attr("src"));
 			
 					ObjectResponse text = HttpUtils.get(url.toURI(), context);
-					System.out.println("执行的js内容："+text.getResponseBody());
-					jsEngine.eval((String)text.getResponseBody());
+					//System.out.println("执行的js内容："+text.getResponseBody());
+					js=(String)text.getResponseBody();
+					jsEngine.eval(js);
 				} else {
-					System.out.println("执行的js内容："+element.html());
-					jsEngine.eval(element.html());
+					//System.out.println("执行的js内容："+element.html());
+					js=element.html();
+					jsEngine.eval(js);
 					
 				}
-			} catch (ClientProtocolException e) {
+			} catch (Exception e) {
+				try {
+					System.err.println("执行js出错："+JsBeauty.beauty(js));
+				} catch (FileNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (ScriptException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
 				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (ScriptException e) {
-				e.printStackTrace();
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
+				
 			}
 		}
 
