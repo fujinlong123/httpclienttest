@@ -1,6 +1,5 @@
 package com.fujinlong.httpclienttest;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,7 +14,10 @@ import javax.script.ScriptException;
 import jdk.nashorn.api.scripting.NashornScriptEngine;
 
 public class JsBeauty {
-	public static String beauty(String src) throws FileNotFoundException, ScriptException {
+	public static String beauty(String src,boolean beauty) throws FileNotFoundException, ScriptException {
+		if(!beauty){
+			return src;
+		}
 		ScriptEngineManager manager = new ScriptEngineManager();
 		NashornScriptEngine engine = (NashornScriptEngine) manager.getEngineByName("javascript");
 		engine.compile(new FileReader(new File(QQMailLoginExample.class.getResource("jsbeauty.js").getPath()))).eval();
@@ -35,6 +37,6 @@ public class JsBeauty {
 		while((line=bufferedReader.readLine())!=null){
 			sb.append(line);
 		}
-		JsBeauty.beauty(sb.toString());
+		JsBeauty.beauty(sb.toString(),true);
 	}
 }

@@ -37,7 +37,7 @@ public class jsExec {
 				}
 			} catch (Exception e) {
 				try {
-					System.err.println("执行js出错："+JsBeauty.beauty(js));
+					System.err.println("执行js出错："+JsBeauty.beauty(js,false));
 				} catch (FileNotFoundException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();

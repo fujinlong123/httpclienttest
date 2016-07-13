@@ -888,9 +888,9 @@ var events = [{}];
 					// application/x-javascript
 					if(url.getPath().endsWith(".js")||(response!=null&&response.getMimeType()=='application/x-javascript')){
 						try{
-							jsEngine.eval(JsBeauty.beauty(self.responseText));
+							jsEngine.eval(JsBeauty.beauty(self.responseText,false));
 						}catch(e){		
-							 print(JsBeauty.beauty(self.responseText));
+							 print(JsBeauty.beauty(self.responseText,false));
 							throw e;
 						}
 					}
