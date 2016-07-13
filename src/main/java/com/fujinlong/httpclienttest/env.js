@@ -1,11 +1,13 @@
-/*
- * Pure JavaScript Browser Environment
- *   By John Resig <http://ejohn.org/>
- * Copyright 2008 John Resig, under the MIT License
- */
 
 var CookieUtils = Java.type("com.fujinlong.httpclienttest.CookieUtils");
 var JsBeauty=Java.type("com.fujinlong.httpclienttest.JsBeauty");
+var BindFormToDocument=Java.type("com.fujinlong.httpclienttest.BindFormToDocument");
+var SaveImg=Java.type("com.fujinlong.httpclienttest.SaveImg");
+
+var Kkk=Java.type("com.fujinlong.httpclienttest.Kkk");
+var StringResponse=Java.type("com.fujinlong.httpclienttest.StringResponse");
+
+
 
 Object.prototype.__defineSetter__=function(name,fun){
 	
@@ -44,19 +46,47 @@ String.prototype.match=function(regex){return regex.exec(this);};
 
 // The window Object
 var window = this;
-
-
+var top= window;
+var parent =window;
+var events = [{}];
 (function(){
 
 	// Browser Navigator
 
+	// Helper method for generating the right
+	// DOM objects based upon the type
+	
+	var obj_nodes = new java.util.HashMap();
+
+	window.makeNode=function(node){
+		if ( node ) {
+			if ( !obj_nodes.containsKey( node ) ){
+				obj_nodes.put( node, node.getNodeType() == 1?
+					new DOMElement( node ) :
+					node.getNodeType() == 8 ?
+					new DOMComment( node ) :
+					new DOMNode( node ) );
+			}
+			return obj_nodes.get(node);
+		} else
+			return null;
+	}
 	
 	
 	
+	window.screen={
+			height:1080,
+			width:1920
+	};
 	window.navigator = {
 		get userAgent(){
-			return "Mozilla/5.0 (Macintosh; U; Intel Mac OS X; en-US; rv:1.8.1.3) Gecko/20070309 Firefox/2.0.0.3";
-		}
+			return "5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36";
+		},
+		mimeTypes:{type:'application/x-nacl',description:"Native Client Executable"},
+		appVersion:"5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36",
+		appName:"Netscape"
+		
+		
 	};
 	
 	var curLocation ;
@@ -65,7 +95,6 @@ var window = this;
 
 	
 	window.__defineSetter__("location", function(url){
-		
 		  var xhr = new XMLHttpRequest(); 
 		  xhr.open("GET", url,false);
 		  curLocation=new java.net.URL(url);
@@ -73,12 +102,15 @@ var window = this;
 			  curLocation = new java.net.URL(url); 
 			  print("网页内容："+xhr.responseText);
 			  var dom=org.jsoup.Jsoup.parse(xhr.responseText,url);
+			  windowDom=dom;
 			  window.document = new DOMDocument(xhr.responseText,dom);
-			  com.fujinlong.httpclienttest.jsExec.exec(curLocation,dom,httpClientContext,jsEngine)
+			  com.fujinlong.httpclienttest.jsExec.exec(curLocation,dom,httpClientContext,jsEngine);
+			  BindFormToDocument.bind(dom,jsEngine);
 			  var event = document.createEvent(); 
 			  event.initEvent("load");
 			  window.dispatchEvent( event ); 
 		  };
+
 		  xhr.send();
 		
 	});
@@ -91,6 +123,28 @@ var window = this;
 			get href(){
 				return curLocation.toString();
 			},
+			set href(url){
+				var xhr = new XMLHttpRequest(); 
+				  xhr.open("GET", url,false);
+				  print("打开："+url);
+				  curLocation=new java.net.URL(url);
+				  xhr.onreadystatechange = function(){ 
+					  curLocation = new java.net.URL(url); 
+					  print("网页内容："+xhr.responseText);
+					  var dom=org.jsoup.Jsoup.parse(xhr.responseText,url);
+					  windowDom=dom;
+					  window.document = new DOMDocument(xhr.responseText,dom);
+					  com.fujinlong.httpclienttest.jsExec.exec(curLocation,dom,httpClientContext,jsEngine);
+					  BindFormToDocument.bind(dom,jsEngine);
+					  var event = document.createEvent(); 
+					  event.initEvent("load");
+					  window.dispatchEvent( event ); 
+				  };
+				  xhr.send();
+			},
+			get hostname(){
+				return curLocation.getHost();
+			},
 			toString: function(){
 				return this.href;
 			}
@@ -102,14 +156,22 @@ var window = this;
 	var timers = [];
 	
 	window.setTimeout = function(fn, time){
+		print("延时执行："+fn);
 		var num;
 		return num = setInterval(function(){
-			fn();
+			if(typeof fn==='string'){
+				print("延时执行xxxxx"+fn);
+				jsEngine.eval(fn);
+			}else{
+				print("延时执行notString"+fn);
+				fn();
+			}
 			clearInterval(num);
 		}, time);
 	};
 	
 	window.setInterval = function(fn, time){
+		print("延时执行setInterval："+fn);
 		var num = timers.length;
 		
 		timers[num] = new java.lang.Thread(new java.lang.Runnable({
@@ -127,6 +189,18 @@ var window = this;
 		return num;
 	};
 	
+	window.clearTimeout=function(timeout){
+		print("清除timeout"+timeout);
+		if(timeout){
+			try{
+				timers[timeout].stop();
+			}catch(e){
+				e.printStackTrace();
+			}
+			
+		}
+	}
+	
 	window.clearInterval = function(num){
 		if ( timers[num] ) {
 			timers[num].stop();
@@ -136,9 +210,10 @@ var window = this;
 	
 	// Window Events
 	
-	var events = [{}];
+	
 
 	window.addEventListener = function(type, fn){
+		print("添加事件："+type+"__"+this+"__"+fn);
 		if ( !this.uuid || this == window ) {
 			this.uuid = events.length;
 			events[this.uuid] = {};
@@ -167,10 +242,11 @@ var window = this;
 	};
 	
 	window.dispatchEvent = function(event){
+		
+		print("分发事件："+event.type+"this.uuid:"+this.uuid+"event:"+events[this.uuid]);
 		if ( event.type ) {
 			if ( this.uuid && events[this.uuid][event.type] ) {
 				var self = this;
-			
 				events[this.uuid][event.type].forEach(function(fn){
 					fn.call( self, event );
 				});
@@ -192,6 +268,9 @@ var window = this;
 	};
 	
 	DOMDocument.prototype = {
+		get referrer(){
+			return 'https://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&rsv_idx=1&tn=baidu&wd=mail.qq.com&oq=sublime%20%E8%B7%B3%E8%BD%AC%E6%8C%87%E5%AE%9A%E8%A1%8C&rsv_pq=c9122210000f41db&rsv_t=051dWG2wT3Q5vS8%2BbsEd2A7sBcRuOx7e80MfmAW56%2BLzYwikadEbPJtMfnE&rqlang=cn&rsv_enter=1&inputT=20824&rsv_sug3=16&rsv_sug1=17&rsv_sug7=100&bs=sublime%20%E8%B7%B3%E8%BD%AC%E6%8C%87%E5%AE%9A%E8%A1%8C';
+		},	
 		get nodeType(){
 			return 9;
 		},
@@ -221,7 +300,11 @@ var window = this;
 		},
 		getElementById: function(id){
 			print("选择id为"+id+"的元素");
-			print(this._dom.select("#"+id).first());
+			
+			if(id==='auth_low_login_enable'){
+				id='auth_low_login_box';
+			}
+			//print(this._dom.select("#"+id).first());
 			return makeNode(this._dom.select("#"+id).first());
 		},
 		get body(){
@@ -230,12 +313,11 @@ var window = this;
 		get documentElement(){
 			return makeNode( this._dom );
 		},
-		get ownerDocument(){
-			return null;
-		},
+		
 		addEventListener: window.addEventListener,
 		removeEventListener: window.removeEventListener,
 		dispatchEvent: window.dispatchEvent,
+		attachEvent:window.addEventListener,
 		get nodeName() {
 			return "#document";
 		},
@@ -275,7 +357,8 @@ var window = this;
 				type: "",
 				initEvent: function(type){
 					this.type = type;
-				}
+				},
+				preventDefault:function(){}
 			};
 		},
 		write:function(o){
@@ -286,7 +369,11 @@ var window = this;
 		},
 		get location(){
 			return window.location;
-		}
+		},
+		get ownerDocument(){
+			print(this+'ownerDocument:'+this._dom.ownerDocument());
+			return makeNode(this._dom.ownerDocument());
+		},
 	};
 	
 	function getDocument(node){
@@ -326,9 +413,6 @@ var window = this;
 		get nodeType(){
 			return this._dom.getNodeType();
 		},
-		get nodeValue(){
-			return this._dom.getNodeValue();
-		},
 		get nodeName() {
 			return this._dom.getNodeName();
 		},
@@ -339,26 +423,25 @@ var window = this;
 			return makeNode( this._dom.cloneNode(deep) );
 		},
 		get ownerDocument(){
-			return getDocument( this._dom.ownerDocument );
+			print(this+'ownerDocument:'+this._dom.ownerDocument());
+			return makeNode( this._dom.ownerDocument() );
 		},
 		get documentElement(){
 			return makeNode( this._dom.documentElement );
 		},
 		get parentNode() {
-			return makeNode( this._dom.getParentNode() );
+			return makeNode( this._dom.parentNode() );
 		},
 		get nextSibling() {
-			return makeNode( this._dom.getNextSibling() );
+			return makeNode( this._dom.nextSibling() );
 		},
 		get previousSibling() {
-			return makeNode( this._dom.getPreviousSibling() );
+			return makeNode( this._dom.previousSibling() );
 		},
 		toString: function(){
-			return '"' + this.nodeValue + '"';
+			return '未实现';
 		},
-		get outerHTML(){
-			return this.nodeValue;
-		}
+	
 	};
 
 	window.DOMComment = function(node){
@@ -386,11 +469,50 @@ var window = this;
 	
 	
 	DOMElement.prototype = extend( new DOMNode(), {
+		init:function(){
+			this.style = {
+					get opacity(){ return this._opacity; },
+					set opacity(val){ this._opacity = val + ""; }
+				};
+				
+				// Load CSS info
+				var styles = (this.getAttribute("style") || "").split(/\s*;\s*/);
+				
+				for ( var i = 0; i < styles.length; i++ ) {
+					var style = styles[i].split(/\s*:\s*/);
+					if ( style.length == 2 )
+						this.style[ style[0] ] = style[1];
+				}
+				
+				if ( this.nodeName == "FORM" ) {
+					this.__defineGetter__("elements", function(){
+						return this.getElementsByTagName("*");
+					});
+					
+					this.__defineGetter__("length", function(){
+						var elems = this.elements;
+						for ( var i = 0; i < elems.length; i++ ) {
+							this[i] = elems[i];
+						}
+						
+						return elems.length;
+					});
+				}
+
+				if ( this.nodeName == "SELECT" ) {
+					this.__defineGetter__("options", function(){
+						return this.getElementsByTagName("option");
+					});
+				}
+
+				this.defaultValue = this.value+"";
+			
+		},
 		get nodeName(){
 			return this._dom.nodeName();
 		},
 		get tagName(){
-			return this.nodeName;
+			return this._dom.tagName();
 		},
 		toString: function(){
 			return "<" + this.tagName + (this.id ? "#" + this.id : "" ) + ">";
@@ -425,23 +547,25 @@ var window = this;
 		},
 		
 		get innerHTML(){
-			return this.childNodes.outerHTML;	
+			return this._dom.html();	
 		},
 		set innerHTML(html){
-			html = html.replace(/<\/?([A-Z]+)/g, function(m){
-				return m.toLowerCase();
-			}).replace(/&nbsp;/g, " ");
+			/*
+			 * html = html.replace(/<\/?([A-Z]+)/g, function(m){ return
+			 * m.toLowerCase(); }).replace(/&nbsp;/g, " ");
+			 * 
+			 * var nodes = this.ownerDocument.importNode( new DOMDocument( new
+			 * java.io.ByteArrayInputStream( (new java.lang.String("<wrap>" +
+			 * html + "</wrap>")) .getBytes("UTF8"))).documentElement,
+			 * true).childNodes;
+			 * 
+			 * while (this.firstChild) this.removeChild( this.firstChild );
+			 * 
+			 * for ( var i = 0; i < nodes.length; i++ ) this.appendChild(
+			 * nodes[i] );
+			 */
+			this._dom.html(html);
 			
-			var nodes = this.ownerDocument.importNode(
-				new DOMDocument( new java.io.ByteArrayInputStream(
-					(new java.lang.String("<wrap>" + html + "</wrap>"))
-						.getBytes("UTF8"))).documentElement, true).childNodes;
-				
-			while (this.firstChild)
-				this.removeChild( this.firstChild );
-			
-			for ( var i = 0; i < nodes.length; i++ )
-				this.appendChild( nodes[i] );
 		},
 		
 		get textContent(){
@@ -532,16 +656,31 @@ var window = this;
 		get src() { return this.getAttribute("src") || ""; },
 		
 		set src(val) { 
+			print("设置Src:"+this.tagName+":"+val);
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", val);
+			if(this.getAttribute("id")==verifyimgId){
+				print("设置congtentType:");
+				xhr.contentType='img';
+			}
 			var self=this;
 			xhr.onreadystatechange = function(){
 				self.onload && self.onload();
+				if(self.getAttribute("id")==verifyimgId){
+					Kkk.needVerify=true;
+					self.verifyimgNotify();
+					SaveImg.save(xhr.responseImg,val);
+				}
 			};
 			xhr.send();
 			return this.setAttribute("src",val);
 		},
-		
+		set href(val){
+			return this.setAttribute("href",val);
+		},
+		get href(){
+			return this.getAttribute("href") || "";
+		},
 		get id() { return this.getAttribute("id") || ""; },
 		set id(val) { return this.setAttribute("id",val); },
 		
@@ -552,6 +691,7 @@ var window = this;
 		},
 		setAttribute: function(name,value){
 			print(name+"______"+value);
+			if(value){value=value+""};
 			this._dom.attr(name,value);
 		},
 		removeAttribute: function(name){
@@ -634,45 +774,10 @@ var window = this;
 			} else
 				return null;
 		},
-		init:function(){
-			this.style = {
-					get opacity(){ return this._opacity; },
-					set opacity(val){ this._opacity = val + ""; }
-				};
-				
-				// Load CSS info
-				var styles = (this.getAttribute("style") || "").split(/\s*;\s*/);
-				
-				for ( var i = 0; i < styles.length; i++ ) {
-					var style = styles[i].split(/\s*:\s*/);
-					if ( style.length == 2 )
-						this.style[ style[0] ] = style[1];
-				}
-				
-				if ( this.nodeName == "FORM" ) {
-					this.__defineGetter__("elements", function(){
-						return this.getElementsByTagName("*");
-					});
-					
-					this.__defineGetter__("length", function(){
-						var elems = this.elements;
-						for ( var i = 0; i < elems.length; i++ ) {
-							this[i] = elems[i];
-						}
-						
-						return elems.length;
-					});
-				}
-
-				if ( this.nodeName == "SELECT" ) {
-					this.__defineGetter__("options", function(){
-						return this.getElementsByTagName("option");
-					});
-				}
-
-				this.defaultValue = this.value+"";
-			
-		}
+		get hostname(){
+			return this._dom.getHostname();
+		},
+		verifyimgNotify:function(){}
 	});
 	
 	window.Image=function(){
@@ -699,27 +804,7 @@ var window = this;
 		return a;
 	}
 	
-	// Helper method for generating the right
-	// DOM objects based upon the type
 	
-	var obj_nodes = new java.util.HashMap();
-	
-	
-	function makeNode(node){
-		if ( node ) {
-
-			if ( !obj_nodes.containsKey( node ) ){
-
-				obj_nodes.put( node, node.getNodeType() == 1?
-					new DOMElement( node ) :
-					node.getNodeType() == 8 ?
-					new DOMComment( node ) :
-					new DOMNode( node ) );
-			}
-			return obj_nodes.get(node);
-		} else
-			return null;
-	}
 	
 	// XMLHttpRequest
 	// Originally implemented by Yehuda Katz
@@ -784,7 +869,6 @@ var window = this;
 					
 					// print(com.fujinlong.httpclienttest.HttpUtils.get("http://www.baidu.com"));
 					// print(httpClientContext);
-					
 					handleResponse();
 				}
 				
@@ -815,10 +899,26 @@ var window = this;
 					 * java.nio.charset.Charset.forName(contentEncoding)
 					 * .decode(java.nio.ByteBuffer.wrap(baos.toByteArray())).toString();
 					 */
+					var stringResponse=null;
+					try{
+						if(self.contentType=='img'){
+							self.responseImg=com.fujinlong.httpclienttest.HttpUtils.getImg(url,httpClientContext);
+						}else{
+							stringResponse= com.fujinlong.httpclienttest.HttpUtils.get(url,httpClientContext);
+							self.responseText=stringResponse.getResponseBody();
+							print("请求连接："+url.toString());
+							if(!(stringResponse!=null&&stringResponse.getMimeType()=='image/bmp')){
+								print("请求内容："+self.responseText);
+							}
+						}
+						
+					}catch(e){
+						//print("加载连接出错："+url.toString());
+						//print("出错原因："+e);
+					}
 					
-					self.responseText=com.fujinlong.httpclienttest.HttpUtils.get(url,httpClientContext);
-					print(url.toString());
-					if(url.getPath().endsWith(".js")){
+					//application/x-javascript
+					if(url.getPath().endsWith(".js")||(stringResponse!=null&&stringResponse.getMimeType()=='application/x-javascript')){
 						try{
 							jsEngine.eval(JsBeauty.beauty(self.responseText));
 						}catch(e){		
@@ -830,12 +930,11 @@ var window = this;
 					var regex= /^\s*</;
 			
 					if ( regex.test(self.responseText) ){
-						/*try {
-							responseXML = new DOMDocument(
-								new java.io.ByteArrayInputStream(
-									(new java.lang.String(
-										self.responseText)).getBytes("UTF8")));
-						} catch(e) {}*/
+						/*
+						 * try { responseXML = new DOMDocument( new
+						 * java.io.ByteArrayInputStream( (new java.lang.String(
+						 * self.responseText)).getBytes("UTF8"))); } catch(e) {}
+						 */
 					}
 				}
 				

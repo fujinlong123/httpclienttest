@@ -15,7 +15,6 @@ import java.util.List;
 
 /**
  The base, abstract Node model. Elements, Documents, Comments etc are all Node instances.
-
  @author Jonathan Hedley, jonathan@hedley.net */
 public abstract class Node implements Cloneable {
     private static final List<Node> EMPTY_NODES = Collections.emptyList();
@@ -691,4 +690,18 @@ public abstract class Node implements Cloneable {
             }
         }
     }
+    
+    public int getNodeType(){
+    	if(this instanceof Element){
+    		return 1;
+    	}
+  
+    	if(this instanceof Comment){
+    		return 8;
+    	}
+    	return 0;
+    }
+    
+    
+    
 }

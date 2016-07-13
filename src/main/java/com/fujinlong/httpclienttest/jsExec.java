@@ -23,13 +23,12 @@ public class jsExec {
 			try {
 				if (!StringUtil.isBlank(element.attr("src"))) {
 					URL url =new URL(baseUrl, element.attr("src"));
-					
-					System.out.println(url.toString());
-					String text = HttpUtils.get(url.toURI(), context);
-					System.out.println(text);
-					jsEngine.eval(text);
+			
+					StringResponse text = HttpUtils.get(url.toURI(), context);
+					System.out.println("执行的js内容："+text.getResponseBody());
+					jsEngine.eval(text.getResponseBody());
 				} else {
-					System.out.println(element.html());
+					System.out.println("执行的js内容："+element.html());
 					jsEngine.eval(element.html());
 					
 				}
@@ -46,7 +45,7 @@ public class jsExec {
 
 		try {
 			//jsEngine.eval("print(window.onload())");
-			jsEngine.eval("print('print(pt.plogin)'+pt.plogin)");
+			jsEngine.eval("print('print(pt.plogin)'+pt)");
 			//jsEngine.eval("pt.plogin.submit=function(t){print('pt.plogin.submitpt.plogin.submitpt.plogin.submitpt.plogin.submit');}");
 		} catch (ScriptException e) {
 			e.printStackTrace();

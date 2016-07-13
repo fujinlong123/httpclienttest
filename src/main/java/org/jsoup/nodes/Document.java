@@ -103,6 +103,12 @@ public class Document extends Element {
      @return new element
      */
     public Element createElement(String tagName) {
+    	if("script".equalsIgnoreCase(tagName)){
+    		System.out.println("");
+    	}
+    	if("a".equalsIgnoreCase(tagName)){
+    		return new AElement(Tag.valueOf(tagName), tagName);
+    	}
         return new Element(Tag.valueOf(tagName), this.baseUri());
     }
 

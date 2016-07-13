@@ -1,8 +1,10 @@
 package com.fujinlong.httpclienttest;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
 
 import javax.script.ScriptEngineManager;
@@ -25,38 +27,78 @@ public class jsouptest {
 	public static void main(String[] args)
 			throws IOException, ScriptException, SAXException, ParserConfigurationException {
 		ScriptEngineManager manager = new ScriptEngineManager();
-		NashornScriptEngine engine = (NashornScriptEngine) manager.getEngineByName("javascript");
+		final NashornScriptEngine engine = (NashornScriptEngine) manager.getEngineByName("javascript");
 		engine.put("jsEngine", engine);
 		engine.compile(new FileReader(new File(jsouptest.class.getResource("env.js").getPath()))).eval();
 
-		engine.eval("print(new RegExp());");
-		
+		engine.eval("print(Function.prototype.call);");
+
 		HttpClientContext context = HttpClientContext.create();
 		engine.put("httpClientContext", context);
 		String url = "https://mail.qq.com";
-	
-		String text = HttpUtils.get(url, context);
-		Document doc = Jsoup.parse(text);
+		Document windowDom = null;
+		engine.put("windowDom", windowDom);
+
+		engine.put("verifyimgId", "verifyimg");
+		StringResponse response = HttpUtils.get(url, context);
+		Document doc = Jsoup.parse(response.getResponseBody());
 		Element element = doc.getElementById("login_frame");
-		String src = element.attr("src"); 
-		
-		 String text1 = HttpUtils.get(src, context);
-		 System.out.println("text1:"+text1);
-			Document doddddc = Jsoup.parse(text1);
-			System.out.println(doddddc.outerHtml());
-			Object o =doddddc.select("#auth_low_login_enable");
-			
-		engine.eval("window.location='"+src+"';");
-		List<Cookie> cookies=context.getCookieStore().getCookies();
-		//System.out.println(CookieUtils.toStr(context));
-		//Object o1=context.getCookieOrigin();
-		
-		
-		
-		///System.out.println(JSON.toJSONString(o1));
+
+		// element.previousSibling()
+		String src = element.attr("src");
+
+		// String text1 = HttpUtils.get(src, context);
+		// System.out.println("text1:"+text1);
+		// Document doddddc = Jsoup.parse(text1);
+		// System.out.println(doddddc.outerHtml());
+		// Object o =doddddc.select("#auth_low_login_enable");
+
+		engine.eval("window.location='" + src + "';");
+		List<Cookie> cookies = context.getCookieStore().getCookies();
+		// System.out.println(CookieUtils.toStr(context));
+		// Object o1=context.getCookieOrigin();
+
+		/// System.out.println(JSON.toJSONString(o1));
+		engine.eval("document.getElementById('u').value='923444172@qq.com'");
+		engine.eval("document.getElementById('u').blur()");
+		engine.eval("document.getElementById('p').value='lang::;;19931216'");
+
+		engine.eval("document.getElementById('login_button').click();");
 
 		
-		engine.eval("document.getElementById('login_button').click()");
+		while (true) {
+			try {
+				/*if (Kkk.needVerify) {
+					System.out.println("请输入验证码：");
+					BufferedReader strin = new BufferedReader(new InputStreamReader(System.in));
+					String str = strin.readLine();
+					engine.eval("document.getElementById('verifycode').value='" + str + "'");
+					Kkk.needVerify=false;
+				}else{*/
+					BufferedReader strin = new BufferedReader(new InputStreamReader(System.in));
+					String str = strin.readLine();
+					if("find".equalsIgnoreCase(str)){
+						System.out.println(Kkk.needVerify);
+					}else{
+						String ll=null;
+						while((ll=strin.readLine())!=null){
+							if("e".equals(ll)){
+								break;
+							}
+							str+=ll;
+						}
+						Object o=engine.eval(str);
+						System.out.println(o);
+					}
+					Thread.sleep(1000);
+				//}
+				
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 		
 		/*
 		 * Connection con = Jsoup.connect(url).userAgent(

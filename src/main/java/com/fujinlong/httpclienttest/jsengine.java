@@ -20,7 +20,7 @@ public class jsengine {
 		
 		ScriptEngineManager manager = new ScriptEngineManager();
 		NashornScriptEngine engine = (NashornScriptEngine)manager.getEngineByName("javascript");
-
+		engine.eval("''.toLowerCase()");
 		
 	Bindings b=	engine.getBindings(ScriptContext.ENGINE_SCOPE);
 	

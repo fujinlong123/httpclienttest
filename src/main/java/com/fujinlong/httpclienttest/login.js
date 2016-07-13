@@ -57,7 +57,7 @@ function ptuiCB(t, e, i, n, o) {
         pt.plogin.redirect(n, i)
     }
     var r = $("p"),
-    s = pt.plogin.at_account && (r.value || pt.plogin.armSafeEdit.safepwd);
+    s = !(!pt.plogin.at_account || !r.value && !pt.plogin.armSafeEdit.safepwd);
     clearTimeout(pt.plogin.loginClock),
     s && (pt.plogin.lastCheckAccount = ""),
     pt.plogin.hasSubmit = !0;
@@ -102,7 +102,7 @@ function ptuiCB(t, e, i, n, o) {
     default:
         pt.plogin.needVc && !pt.plogin.needShowNewVc ? pt.plogin.changeVC() : pt.plogin.check()
     }
-    if (0 != t && s && pt.plogin.show_err(o, l), !pt.plogin.hasCheck && s && (pt.plogin.needShowNewVc || (pt.plogin.showVC(), $("verifycode").focus(), $("verifycode").select())), Math.random() < .2) {
+    if (0 != t && s && pt.plogin.show_err(o, l), !pt.plogin.hasCheck() && s && (pt.plogin.needShowNewVc || (pt.plogin.showVC(), $("verifycode").focus(), $("verifycode").select())), Math.random() < .2) {
         pt.plogin.isdTime["7808-7-2-1"] = (new Date).getTime();
         var a = 1;
         pt.ptui.isHttps && (a = 2);
@@ -111,7 +111,7 @@ function ptuiCB(t, e, i, n, o) {
     }
 }
 function ptui_checkVC(t, e, i, n, o) {
-    switch (clearTimeout(pt.plogin.checkClock), pt.plogin.isRandSalt = o, pt.plogin.salt = i, pt.plogin.checkRet = t, "2" == t ? pt.plogin.loginState == pt.LoginState.PLogin && pt.plogin.show_err(pt.str.inv_uin) : "3" == t || !pt.plogin.hasSubmit, t + "") {
+    switch (clearTimeout(pt.plogin.checkClock), pt.plogin.isRandSalt = o, pt.plogin.salt = i, pt.plogin.checkRet = t, pt.plogin.lastCheckAccount = pt.plogin.account, "2" == t ? pt.plogin.loginState == pt.LoginState.PLogin && pt.plogin.show_err(pt.str.inv_uin) : "3" == t || !pt.plogin.hasSubmit, t + "") {
     case "0":
     case "2":
     case "3":
@@ -128,8 +128,7 @@ function ptui_checkVC(t, e, i, n, o) {
         pt.plogin.needVc = !0,
         $.report.monitor("330320", .05)
     } (1 != pt.ptui.pt_vcode_v1 || 1 != t) && (pt.plogin.pt_verifysession = n),
-    pt.plogin.domFocus($("p")),
-    pt.plogin.hasCheck = !0,
+    pt.plogin.hasCheck(!0),
     pt.plogin.checkTime = (new Date).getTime(),
     pt.plogin.check.cb && pt.plogin.check.cb()
 }
@@ -2343,7 +2342,7 @@ pt.plogin = {
     at_account: "",
     uin: "",
     salt: "",
-    hasCheck: !1,
+    checkState: !1,
     lastCheckAccount: "",
     needVc: !1,
     vcFlag: !1,
@@ -2423,8 +2422,8 @@ pt.plogin = {
             return e.href = t,
             e
         },
-        e = [/\bqcloud.com$/, /\b110.qq.com$/, /\baq.qq.com$/],
-        i = t(pt.qlogin.getSurl());
+        e = [/\bqcloud.com$/, /\b110.qq.com$/, /\baq.qq.com$/, /\breg.t.qq.com$/],
+        i = t(document.referrer);
         for (var n in e) if (i.hostname.match(e[n])) return ! 0;
         return ! 1
     },
@@ -2506,7 +2505,7 @@ pt.plogin = {
         pt.plogin.initQlogin.url = t;
         var i = 0,
         n = !1;
-        if (t && 0 == pt.ptui.auth_mode && (n = !0), e || 0 == pt.ptui.enable_qlogin || 5 == $.cookie.get("pt_qlogincode") || (i = $.getLoginQQNum()), i += n ? 1 : 0, i += e ? e.length: 0, pt.plogin.hasNoQlogin = 0 == i ? !0 : !1, $("switcher_plogin").innerHTML = pt.plogin.isTenpay ? pt.str.otherqq_login: pt.str.h_pt_login, i > 0 || pt.plogin.isNewQr ? ($("login").className = "login", pt.plogin.switchpage(0 == i && (pt.plogin.isMailLogin || pt.plogin.isTenpay) ? pt.LoginState.PLogin: pt.LoginState.QLogin)) : (pt.plogin.switchpage(pt.LoginState.PLogin), $("login").className = "login_no_qlogin", $("u").value && 0 == pt.ptui.auth_mode && pt.plogin.check()), pt.qlogin.hasBuildQlogin || pt.qlogin.buildQloginList(e), 0 != pt.ptui.auth_mode && t && pt.plogin.showAuth(pt.ptui.auth_mode, t), 0 == pt.ptui.enable_qlogin && 0 == $.sso_ver) try {
+        if (t && 0 == pt.ptui.auth_mode && (n = !0), e || 0 == pt.ptui.enable_qlogin || 5 == $.cookie.get("pt_qlogincode") || (i = $.getLoginQQNum()), i += n ? 1 : 0, i += e ? e.length: 0, pt.plogin.hasNoQlogin = 0 == i ? !0 : !1, $("switcher_plogin").innerHTML = pt.plogin.isTenpay ? pt.str.otherqq_login: pt.str.h_pt_login, i > 0 || pt.plogin.isNewQr ? ($("login").className = "login", pt.plogin.switchpage(0 == i && (pt.plogin.isMailLogin || pt.plogin.isTenpay) ? pt.LoginState.PLogin: pt.LoginState.QLogin)) : (pt.plogin.switchpage(pt.LoginState.PLogin), $("login").className = "login_no_qlogin", $("u").value && 0 == pt.ptui.auth_mode && pt.plogin.check()), pt.qlogin.hasBuildQlogin || pt.qlogin.buildQloginList(e), pt.qlogin.hasBuildQlogin && pt.plogin.hideQrTips(), 0 != pt.ptui.auth_mode && t && pt.plogin.showAuth(pt.ptui.auth_mode, t), 0 == pt.ptui.enable_qlogin && 0 == $.sso_ver) try {
             if ($.suportActive()) {
                 var o = new ActiveXObject("SSOAxCtrlForPTLogin.SSOForPTLogin2").QuerySSOInfo(1);
                 $.sso_ver = o.GetInt("nSSOVersion")
@@ -2527,6 +2526,7 @@ pt.plogin = {
         var i, n;
         switch (pt.plogin.loginState = t, e || pt.plogin.hide_err(), t) {
         case 1:
+            pt.plogin.hideQrTips(),
             $.css.hide($("bottom_qlogin")),
             $.css.hide($("qlogin")),
             $.css.show($("web_qr_login")),
@@ -2541,7 +2541,7 @@ pt.plogin = {
             pt.plogin.isNewQr && pt.plogin.cancle_qrlogin(),
             pt.plogin.armSafeEdit && pt.plogin.armSafeEdit.everSafe && (pt.plogin.armSafeEdit.lockToggle(), pt.plogin.armSafeEdit.everSafe = !1),
             0 != pt.plogin.onekeyVerifyClock && pt.plogin.onekeyVerify("normal"),
-            pt.plogin.hasCheck = !1;
+            pt.plogin.hasCheck(!1);
             break;
         case 2:
             $.css.hide($("web_qr_login")),
@@ -2801,7 +2801,7 @@ pt.plogin = {
     u_change: function() {
         pt.plogin.set_account(),
         pt.plogin.passwordErrorNum = 1,
-        pt.plogin.hasCheck = !1,
+        pt.plogin.hasCheck(!1),
         pt.plogin.hasSubmit = !1
     },
     list_keydown: function(t, e) {
@@ -2941,7 +2941,7 @@ pt.plogin = {
         t && $.css.hide(t.target),
         $("u").value = "",
         pt.plogin.domFocus($("u")),
-        pt.plogin.hasCheck = !1
+        pt.plogin.hasCheck(!1)
     },
     check_cdn_img: function() {
         if (window.g_cdn_js_fail && !pt.ptui.isHttps) {
@@ -3294,11 +3294,15 @@ pt.plogin = {
         var t = "flag1=7808&flag2=7&flag3=1&1=1000";
         $.report.simpleIsdSpeed(t)
     },
+    hasCheck: function(t) {
+        return "undefined" == typeof t ? pt.plogin.checkState: void(pt.plogin.checkState = t)
+    },
     check: function(t) {
+        if (0 === pt.plogin.checkState) return pt.plogin.check.cb = t;
         if (pt.plogin.account || pt.plogin.set_account(), $.check.isNullQQ(pt.plogin.account)) return pt.plogin.show_err(pt.str.inv_uin),
         !1;
         if (pt.plogin.account != pt.plogin.lastCheckAccount && "" != pt.plogin.account) {
-            pt.plogin.lastCheckAccount = pt.plogin.account;
+            pt.plogin.hasCheck(0);
             var e = pt.ptui.appid,
             i = pt.plogin.getCheckUrl(pt.plogin.at_account, e);
             pt.plogin.isCheckTimeout = !1,
@@ -3354,7 +3358,7 @@ pt.plogin = {
         if (pt.plogin.cntCheckTimeout >= 2) return pt.plogin.show_err(pt.plogin.checkErr[pt.ptui.lang]),
         pt.plogin.needVc = !1,
         void(pt.plogin.needShowNewVc = !1);
-        if (pt.plogin.submitTime = (new Date).getTime(), t && t.preventDefault(), pt.plogin.lastCheckAccount != pt.plogin.account && !pt.plogin.hasCheck) return void pt.plogin.check(arguments.callee);
+        if (pt.plogin.submitTime = (new Date).getTime(), t && t.preventDefault(), pt.plogin.lastCheckAccount != pt.plogin.account && !pt.plogin.hasCheck()) return void pt.plogin.check(arguments.callee);
         if (!pt.plogin.ptui_onLogin(document.loginform)) return ! 1;
         if ($.cookie.set("ptui_loginuin", escape(document.loginform.u.value), pt.ptui.domain, "/", 720), -1 == pt.plogin.checkRet || 3 == pt.plogin.checkRet) return pt.plogin.show_err(pt.plogin.checkErr[pt.ptui.lang]),
         pt.plogin.lastCheckAccount = "",
@@ -3365,10 +3369,7 @@ pt.plogin = {
         var e = pt.plogin.getSubmitUrl("login");
         return $.winName.set("login_href", encodeURIComponent(pt.ptui.href)),
         pt.plogin.showLoading(),
-        pt.plogin.isVCSessionTimeOut() && !pt.plogin.needVc ? (pt.plogin.lastCheckAccount = "", pt.plogin.check(), window.setTimeout(function() {
-            pt.plogin.submit()
-        },
-        1e3)) : ($.http.loadScript(e), pt.plogin.isdTime["7808-7-2-0"] = (new Date).getTime()),
+        pt.plogin.isVCSessionTimeOut() && !pt.plogin.needVc ? (pt.plogin.lastCheckAccount = "", pt.plogin.check(arguments.callee)) : ($.http.loadScript(e), pt.plogin.isdTime["7808-7-2-0"] = (new Date).getTime()),
         !1
     },
     isVCSessionTimeOut: function() {
