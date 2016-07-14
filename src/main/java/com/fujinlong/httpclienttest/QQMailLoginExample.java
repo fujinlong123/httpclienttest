@@ -37,7 +37,7 @@ public class QQMailLoginExample {
 			engine.eval("print(interval)");
 			engine.eval("print(interval);clearAllTimers()");
 			*/
-			engine.eval("window.location='https://www.baidu.com/';");
+			
 			String mainurl = "https://mail.qq.com";
 			ObjectResponse response = HttpUtils.get(mainurl, httpClientContext);
 			//System.out.println(response.getResponseBody());
