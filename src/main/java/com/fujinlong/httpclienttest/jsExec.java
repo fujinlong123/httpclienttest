@@ -17,7 +17,9 @@ import org.jsoup.select.Elements;
 import jdk.nashorn.api.scripting.NashornScriptEngine;
 
 public class jsExec {
+	
 	public static void exec(URL baseUrl, Document doc, HttpClientContext context, NashornScriptEngine jsEngine) {
+	
 		Elements eles = doc.getElementsByTag("script");
 		String js="";
 		for (Element element : eles) {
@@ -26,18 +28,26 @@ public class jsExec {
 					URL url =new URL(baseUrl, element.attr("src"));
 			
 					ObjectResponse text = HttpUtils.get(url.toURI(), context);
-					//System.out.println("执行的js内容："+text.getResponseBody());
+
 					js=(String)text.getResponseBody();
-					jsEngine.eval(js);
+					if(LogConfig.showExecJs){
+						System.out.println("执行的js内容："+text.getResponseBody());
+					}
+					jsEngine.eval(JsBeauty.beauty(js,false));
 				} else {
-					//System.out.println("执行的js内容："+element.html());
+					
 					js=element.html();
-					jsEngine.eval(js);
+					if(LogConfig.showExecJs){
+						System.out.println("执行的js内容："+JsBeauty.beauty(js,true));
+					}
+					jsEngine.eval(JsBeauty.beauty(js,true));
 					
 				}
 			} catch (Exception e) {
 				try {
-					System.err.println("执行js出错："+JsBeauty.beauty(js,false));
+					if(LogConfig.showErrExecJs){
+						System.err.println("执行js出错："+JsBeauty.beauty(js,true));
+					}
 				} catch (FileNotFoundException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();

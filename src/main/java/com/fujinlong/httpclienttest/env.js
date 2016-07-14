@@ -1,65 +1,47 @@
+load("nashorn:mozilla_compat.js");
+
+
 
 var CookieUtils = Java.type("com.fujinlong.httpclienttest.CookieUtils");
 var JsBeauty=Java.type("com.fujinlong.httpclienttest.JsBeauty");
 var BindFormToDocument=Java.type("com.fujinlong.httpclienttest.BindFormToDocument");
 var SaveImg=Java.type("com.fujinlong.httpclienttest.SaveImg");
-
 var Kkk=Java.type("com.fujinlong.httpclienttest.Kkk");
 var ObjectResponse=Java.type("com.fujinlong.httpclienttest.ObjectResponse");
-
-
-
-Object.prototype.__defineSetter__=function(name,fun){
-	
-	var descriptor = Object.getOwnPropertyDescriptor(this, name)||{ configurable: true};
-	descriptor.set=fun;
-	Object.defineProperty(this,name,descriptor);
-};
-
-Object.prototype.__defineGetter__=function(name,fun){
-	var descriptor = Object.getOwnPropertyDescriptor(this, name)||{ configurable: true};
-	descriptor.get=fun;
-	Object.defineProperty(this,name,descriptor);
-};
-
-Object.prototype.__lookupSetter__=function(name){
-	var descriptor = Object.getOwnPropertyDescriptor(this, name)||{};
-	return descriptor.set;
-};
-
-Object.prototype.__lookupGetter__=function(name){
-	var descriptor = Object.getOwnPropertyDescriptor(this, name)||{};
-	return descriptor.get;
-};
-
-Object.defineProperty(Object.prototype,'__defineSetter__',{enumerable: false});
-
-Object.defineProperty(Object.prototype,'__defineGetter__',{enumerable: false});
-Object.defineProperty(Object.prototype,'__lookupSetter__',{enumerable: false});
-
-Object.defineProperty(Object.prototype,'__lookupGetter__',{enumerable: false});
-
-
+var printErr=java.lang.System.err;
+var IntervalRunnable =Java.type("com.fujinlong.httpclienttest.IntervalRunnable");
+var LogConfig=Java.type("com.fujinlong.httpclienttest.LogConfig");
 String.prototype.match=function(regex){return regex.exec(this);};
+
+
+
+
+
+
 
 
 
 // The window Object
 var window = this;
+window.gc = function() {
+	java.lang.System.gc();
+};
+
+
 var top= window;
 var parent =window;
 var events = [{}];
 (function(){
 
-	// Browser Navigator
-
-	// Helper method for generating the right
-	// DOM objects based upon the type
+	
 	
 	var obj_nodes = new java.util.HashMap();
 
 	window.makeNode=function(node){
+		
+		
 		if ( node ) {
+			//print("node.getNodeType"+node.getNodeType());
 			if ( !obj_nodes.containsKey( node ) ){
 				obj_nodes.put( node, node.getNodeType() == 1?
 					new DOMElement( node ) :
@@ -119,8 +101,10 @@ var events = [{}];
 					tempUrl=new java.net.URL(link);
 				}
 				  xhr.open("GET", tempUrl.toString(),false);
-				//  print("打开："+tempUrl.toString());
+				// print("打开："+tempUrl.toString());
+				  clearAllTimers();
 				  xhr.onreadystatechange = function(){ 
+					 
 					  curLocation = tempUrl; 
 					  var dom=org.jsoup.Jsoup.parse(xhr.responseText,tempUrl.toString());
 					  window.document = new DOMDocument(xhr.responseText,dom);
@@ -142,67 +126,48 @@ var events = [{}];
 				this.href=link;
 			},
 			get hash(){
-				return curLocation.getRef();
+				var hash=curLocation.getRef();
+				return hash || '';
+			},
+			get host(){
+				return this.hostname;
+			},
+			get search(){
+				return "?"+curLocation.getQuery();
 			}
+			
+			
 		};
 	});
 	
 	// Timers
 
-	var timers = [];
+
 	
-	window.setTimeout = function(fn, time){
-		 //print("延时执行："+fn);
-		var num;
-		return num = setInterval(function(){
-			if(typeof fn==='string'){
-				 //print("延时执行xxxxx"+fn);
-				jsEngine.eval(fn);
-			}else{
-				// print("延时执行notString"+fn);
-				fn();
-			}
-			clearInterval(num);
-		}, time);
-	};
-	
-	window.setInterval = function(fn, time){
-		 //print("执行setInterval："+fn);
-		var num = timers.length;
-		
-		timers[num] = new java.lang.Thread(new java.lang.Runnable({
-			run: function(){
-				while (true){
-					// print(time);
-					Packages.java.lang.Thread.sleep(time);
-					fn();
-				}
-			}
-		}));
-		
-		timers[num].start();
-	
-		return num;
-	};
-	
-	window.clearTimeout=function(timeout){
-		// print("清除timeout"+timeout);
-		if(timeout){
-			try{
-				timers[timeout].stop();
-			}catch(e){
-				e.printStackTrace();
-			}
-			
-		}
-	}
-	
-	window.clearInterval = function(num){
-		if ( timers[num] ) {
-			timers[num].stop();
-			delete timers[num];
-		}
-	};
+	/*
+	 * window.clearAllTimers=function(){
+	 *  } window.setTimeout = function(fn, time){ //print("延时执行："+fn); var num;
+	 * return num = setInterval(function(){ print("延时执行real"+fn); if(typeof
+	 * fn==='string'){
+	 * 
+	 * jsEngine.eval(fn); }else{ // print("延时执行notString"+fn); fn(); }
+	 * clearInterval(num); }, time); };
+	 * 
+	 * window.setInterval = function(fn, time){ //print("执行setInterval："+fn);
+	 * var num = timers.length;
+	 * 
+	 * timers[num]=new IntervalRunnable({ run: function(){ while (!isStop()){
+	 * Packages.java.lang.Thread.sleep(time); if(isStop()){ break; } fn(); } }
+	 * }); new java.lang.Thread(timers[num]).start(); return num; };
+	 * 
+	 * window.clearTimeout=function(timeout){ // print("清除timeout"+timeout);
+	 * if(timeout){ try{ timers[timeout].setStop(true); }catch(e){
+	 * e.printStackTrace(); }
+	 *  } }
+	 * 
+	 * window.clearInterval = function(num){ if ( timers[num] ) {
+	 * timers[num].setStop(true); delete timers[num]; } };
+	 */
 	
 	// Window Events
 	
@@ -263,111 +228,6 @@ var events = [{}];
 			obj_nodes.put( this._dom, this );
 	};
 	
-	DOMDocument.prototype = {
-		get referrer(){
-			return 'https://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&rsv_idx=1&tn=baidu&wd=mail.qq.com&oq=sublime%20%E8%B7%B3%E8%BD%AC%E6%8C%87%E5%AE%9A%E8%A1%8C&rsv_pq=c9122210000f41db&rsv_t=051dWG2wT3Q5vS8%2BbsEd2A7sBcRuOx7e80MfmAW56%2BLzYwikadEbPJtMfnE&rqlang=cn&rsv_enter=1&inputT=20824&rsv_sug3=16&rsv_sug1=17&rsv_sug7=100&bs=sublime%20%E8%B7%B3%E8%BD%AC%E6%8C%87%E5%AE%9A%E8%A1%8C';
-		},	
-		get nodeType(){
-			return 9;
-		},
-		createTextNode: function(text){
-			return makeNode( this._dom.createTextNode(
-				text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")) );
-		},
-		createElement: function(name){
-			return makeNode( this._dom.createElement(name.toLowerCase()) );
-		},
-		getElementsByTagName: function(name){
-			return new DOMNodeList( this._dom.getElementsByTag(
-				name.toLowerCase()) );
-		},
-		getElementsByName: function(name){
-			var elems = this._dom.getElementsByTagName("*"), ret = [];
-			ret.item = function(i){ return this[i]; };
-			ret.getLength = function(){ return this.length; };
-			
-			for ( var i = 0; i < elems.length; i++ ) {
-				var elem = elems.item(i);
-				if ( elem.getAttribute("name") == name )
-					ret.push( elem );
-			}
-			
-			return new DOMNodeList( ret );
-		},
-		getElementById: function(id){
-			// print("选择id为"+id+"的元素");
-			
-			if(id==='auth_low_login_enable'){
-				id='auth_low_login_box';
-			}
-			// print(this._dom.select("#"+id).first());
-			return makeNode(this._dom.select("#"+id).first());
-		},
-		get body(){
-			return this.getElementsByTagName("body")[0];
-		},
-		get documentElement(){
-			return makeNode( this._dom );
-		},
-		
-		addEventListener: window.addEventListener,
-		removeEventListener: window.removeEventListener,
-		dispatchEvent: window.dispatchEvent,
-		attachEvent:window.addEventListener,
-		importNode: function(node, deep){
-			return makeNode( this._dom.importNode(node._dom, deep) );
-		},
-		toString: function(){
-			return "Document" + (typeof this._file == "string" ?
-				": " + this._file : "");
-		},
-		get innerHTML(){
-			return this.documentElement.outerHTML;
-		},
-		
-		get defaultView(){
-			return {
-				getComputedStyle: function(elem){
-					return {
-						getPropertyValue: function(prop){
-							prop = prop.replace(/\-(\w)/g,function(m,c){
-								return c.toUpperCase();
-							});
-							var val = elem.style[prop];
-							
-							if ( prop == "opacity" && val == "" )
-								val = "1";
-								
-							return val;
-						}
-					};
-				}
-			};
-		},
-		
-		createEvent: function(){
-			return {
-				type: "",
-				initEvent: function(type){
-					this.type = type;
-				},
-				preventDefault:function(){}
-			};
-		},
-		write:function(o){
-			this._dom.append(o);
-		},
-		get cookie(){
-			return CookieUtils.toStr(httpClientContext);
-		},
-		get location(){
-			return window.location;
-		},
-		get ownerDocument(){
-			// print(this+'ownerDocument:'+this._dom.ownerDocument());
-			return makeNode(this._dom.ownerDocument());
-		},
-	};
 	
 	function getDocument(node){
 		return obj_nodes.get(node);
@@ -431,6 +291,10 @@ var events = [{}];
 		},
 		toString: function(){
 			return '未实现';
+		},
+		insertBefore:function(html){
+			print("执行insertBefore方法："+html);
+			return makeNode(this._dom.before(html));
 		},
 	
 	};
@@ -652,7 +516,7 @@ var events = [{}];
 				self.onload && self.onload();
 				// print("val.hashCode()"+val.hashCode());
 				// print("self.tagName"+self.tagName)
-				if(self.tagName=='IMG'){
+				if(self.tagName=='IMG'&&self.responseBinary){
 					SaveImg.save(xhr.responseText,val.hashCode()+"",val);
 				}
 				
@@ -687,10 +551,10 @@ var events = [{}];
 			return new DOMNodeList( this._dom.childNodes() );
 		},
 		get firstChild(){
-			return makeNode( this._dom.getFirstChild() );
+			return makeNode( this._dom.firstElementSibling() );
 		},
 		get lastChild(){
-			return makeNode( this._dom.getLastChild() );
+			return makeNode( this._dom.lastElementSibling() );
 		},
 		appendChild: function(node){
 			this._dom.appendChild( node._dom );
@@ -714,15 +578,15 @@ var events = [{}];
 			}
 		},
 		removeChild: function(node){
+			print("removeChild:"+node._dom);
 			this._dom.removeChild( node._dom );
 		},
 
-		getElementsByTagName: DOMDocument.prototype.getElementsByTagName,
-		
+	
 		addEventListener: window.addEventListener,
 		removeEventListener: window.removeEventListener,
 		dispatchEvent: window.dispatchEvent,
-		
+		attachEvent:window.addEventListener,
 		click: function(){
 			var event = document.createEvent();
 			event.initEvent("click");
@@ -772,7 +636,33 @@ var events = [{}];
 		get hostname(){
 			return this._dom.getHostname();
 		},
-		verifyimgNotify:function(){}
+		getElementsByTagName: function(name){
+			//print("执行getElementsByTagName："+this._dom+":"+this+":"+location);
+			return new DOMNodeList( this._dom.getElementsByTag(
+				name.toLowerCase()) );
+		},
+		getElementsByName: function(name){
+			var elems = this._dom.getElementsByTagName("*"), ret = [];
+			ret.item = function(i){ return this[i]; };
+			ret.getLength = function(){ return this.length; };
+			
+			for ( var i = 0; i < elems.length; i++ ) {
+				var elem = elems.item(i);
+				if ( elem.getAttribute("name") == name )
+					ret.push( elem );
+			}
+			
+			return new DOMNodeList( ret );
+		},
+		getElementById: function(id){
+			// print("选择id为"+id+"的元素");
+			
+			if(id==='auth_low_login_enable'){
+				id='auth_low_login_box';
+			}
+			// print(this._dom.select("#"+id).first());
+			return makeNode(this._dom.select("#"+id).first());
+		},
 	});
 	
 	window.Image=function(){
@@ -799,6 +689,84 @@ var events = [{}];
 		return a;
 	}
 	
+	
+	
+	DOMDocument.prototype = extend(new DOMElement(),{
+			get referrer(){
+				return 'https://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&rsv_idx=1&tn=baidu&wd=mail.qq.com&oq=sublime%20%E8%B7%B3%E8%BD%AC%E6%8C%87%E5%AE%9A%E8%A1%8C&rsv_pq=c9122210000f41db&rsv_t=051dWG2wT3Q5vS8%2BbsEd2A7sBcRuOx7e80MfmAW56%2BLzYwikadEbPJtMfnE&rqlang=cn&rsv_enter=1&inputT=20824&rsv_sug3=16&rsv_sug1=17&rsv_sug7=100&bs=sublime%20%E8%B7%B3%E8%BD%AC%E6%8C%87%E5%AE%9A%E8%A1%8C';
+			},	
+			get nodeType(){
+				return 9;
+			},
+			createTextNode: function(text){
+				return makeNode( this._dom.createTextNode(
+					text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")) );
+			},
+			createElement: function(name){
+				return makeNode( this._dom.createElement(name.toLowerCase()) );
+			},
+			
+			get body(){
+				return this.getElementsByTagName("body")[0];
+			},
+			get documentElement(){
+				return makeNode( this._dom );
+			},
+			
+		
+			
+			importNode: function(node, deep){
+				return makeNode( this._dom.importNode(node._dom, deep) );
+			},
+			toString: function(){
+				return "Document" + (typeof this._file == "string" ?
+					": " + this._file : "");
+			},
+		
+			get defaultView(){
+				return {
+					getComputedStyle: function(elem){
+						return {
+							getPropertyValue: function(prop){
+								prop = prop.replace(/\-(\w)/g,function(m,c){
+									return c.toUpperCase();
+								});
+								var val = elem.style[prop];
+								
+								if ( prop == "opacity" && val == "" )
+									val = "1";
+									
+								return val;
+							}
+						};
+					}
+				};
+			},
+			
+			createEvent: function(){
+				return {
+					type: "",
+					initEvent: function(type){
+						this.type = type;
+					},
+					preventDefault:function(){}
+				};
+			},
+			write:function(o){
+				this._dom.append(o);
+			},
+			get cookie(){
+				return CookieUtils.toStr(httpClientContext);
+			},
+			get location(){
+				return window.location;
+			},
+			get ownerDocument(){
+				// print(this+'ownerDocument:'+this._dom.ownerDocument());
+				return makeNode(this._dom.ownerDocument());
+			},
+		});
+		
 	
 	
 	// XMLHttpRequest
@@ -861,7 +829,7 @@ var events = [{}];
 				function handleResponse(){
 					var response
 					try{
-						print('请求链接：'+url.toString());
+						//print('请求链接（页内）：'+url.toString());
 						response=com.fujinlong.httpclienttest.HttpUtils.get(url,httpClientContext);
 						if(302==response.getStatusCode()){
 							print('页面跳转到：'+response.getLastHeaderValue('Location'));
@@ -870,9 +838,11 @@ var events = [{}];
 						
 						if(response.isString()){
 							self.responseText=response.getStringResponseBody();
-							print("请求内容："+response.getCharset()+":"+self.responseText);
+							if(LogConfig.showResponseBody){
+								//print("请求内容（页内）："+response.getCharset()+":"+response.getMimeType()+":"+self.responseText);
+							}
 						}else if(response.isBinary()){
-							self.responseText=response.getBinaryResponseBody();
+							self.responseBinary=response.getBinaryResponseBody();
 						}else{
 							throw new Exception('未知结果类型');
 						}
@@ -880,17 +850,22 @@ var events = [{}];
 					
 
 					}catch(e){
-						// print("加载连接出错："+url.toString());
-						// print("出错原因："+e);
-						e.printStackTrace();
+						 print("加载连接出错："+url.toString());
+						 
+						 e.printStackTrace();
 					}
 					
 					// application/x-javascript
-					if(url.getPath().endsWith(".js")||(response!=null&&response.getMimeType()=='application/x-javascript')){
+					if(response!=null&&response.getMimeType()=='application/x-javascript'){
 						try{
-							jsEngine.eval(JsBeauty.beauty(self.responseText,false));
-						}catch(e){		
-							 print(JsBeauty.beauty(self.responseText,false));
+							jsEngine.eval(JsBeauty.beauty(self.responseText,false))
+							if(LogConfig.showExecJs){
+								print("执行js（页内）："+JsBeauty.beauty(self.responseText,true));
+							}
+						}catch(e){
+							if(LogConfig.showErrExecJs){		
+								printErr.println("执行js出错："+JsBeauty.beauty(self.responseText,true));
+							}
 							throw e;
 						}
 					}
@@ -944,6 +919,7 @@ var events = [{}];
 		async: false,
 		readyState: 0,
 		responseText: "",
+		responseBinary:[],
 		status: 0
 	};
 })();

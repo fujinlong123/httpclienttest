@@ -17,7 +17,7 @@ public class JsEngineFactory {
 		final NashornScriptEngine engine = (NashornScriptEngine) manager.getEngineByName("javascript");
 		engine.put("jsEngine", engine);
 		engine.compile(new FileReader(new File(QQMailLoginExample.class.getResource("env.js").getPath()))).eval();
-	
+		engine.compile(new FileReader(new File(QQMailLoginExample.class.getResource("timeout.js").getPath()))).eval();
 		engine.put("httpClientContext", httpClientContext);
 		return engine;
 	}
