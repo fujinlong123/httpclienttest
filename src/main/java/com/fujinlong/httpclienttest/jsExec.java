@@ -22,11 +22,16 @@ public class jsExec {
 	
 		Elements eles = doc.getElementsByTag("script");
 		String js="";
+		String jsurl="";
 		for (Element element : eles) {
 			try {
 				if (!StringUtil.isBlank(element.attr("src"))) {
+					js="";
 					URL url =new URL(baseUrl, element.attr("src"));
-			
+					jsurl=url.toString();
+					if("http://ursdoccdn.nosdn.127.net/webzj_m163/message_2016052502.js".equals(jsurl)){
+						System.out.println();
+					}
 					ObjectResponse text = HttpUtils.get(url.toURI(), context);
 
 					js=(String)text.getResponseBody();
@@ -35,7 +40,7 @@ public class jsExec {
 					}
 					jsEngine.eval(JsBeauty.beauty(js,false));
 				} else {
-					
+					jsurl=baseUrl.toString();
 					js=element.html();
 					if(LogConfig.showExecJs){
 						System.out.println("执行的js内容："+JsBeauty.beauty(js,true));
@@ -43,10 +48,14 @@ public class jsExec {
 					jsEngine.eval(JsBeauty.beauty(js,true));
 					
 				}
-			} catch (Exception e) {
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			} catch (ScriptException e) {
 				try {
 					if(LogConfig.showErrExecJs){
-						System.err.println("执行js出错："+JsBeauty.beauty(js,true));
+						System.err.println("执行js出错：路径:"+jsurl+"\n"+JsBeauty.beauty(js,true));
 					}
 				} catch (FileNotFoundException e1) {
 					// TODO Auto-generated catch block
@@ -57,7 +66,6 @@ public class jsExec {
 				}
 				
 				e.printStackTrace();
-				
 			}
 		}
 

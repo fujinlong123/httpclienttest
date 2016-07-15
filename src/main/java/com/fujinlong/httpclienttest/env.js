@@ -1,4 +1,3 @@
-load("nashorn:mozilla_compat.js");
 
 
 
@@ -860,7 +859,7 @@ var events = [{}];
 						try{
 							jsEngine.eval(JsBeauty.beauty(self.responseText,false))
 							if(LogConfig.showExecJs){
-								print("执行js（页内）："+JsBeauty.beauty(self.responseText,true));
+								print("执行js（页内）：路径："+url.toString()+"\n"+JsBeauty.beauty(self.responseText,true));
 							}
 						}catch(e){
 							if(LogConfig.showErrExecJs){		

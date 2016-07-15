@@ -47,7 +47,7 @@ public class HttpUtils {
 			}
 			objectResponse.setCharset(charset);
 			objectResponse.setMimeType(mimeType);
-			if ("image/bmp".equals(mimeType)) {
+			if ("image/bmp".equals(mimeType)|| "application/octet-stream".equals(mimeType)) {
 				objectResponse.setBinary(true);
 				System.out.println("请求内容：" + objectResponse.getStatusCode() + ":" + objectResponse.getCharset()
 				+ ":" + objectResponse.getMimeType() + ":字节内容不显示" );

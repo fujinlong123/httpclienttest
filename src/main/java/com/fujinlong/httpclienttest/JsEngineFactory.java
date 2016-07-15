@@ -15,9 +15,11 @@ public class JsEngineFactory {
 	public static NashornScriptEngine getEnine(HttpClientContext httpClientContext) throws FileNotFoundException, ScriptException {
 		ScriptEngineManager manager = new ScriptEngineManager();
 		final NashornScriptEngine engine = (NashornScriptEngine) manager.getEngineByName("javascript");
+	
 		engine.put("jsEngine", engine);
-		engine.compile(new FileReader(new File(QQMailLoginExample.class.getResource("env.js").getPath()))).eval();
-		engine.compile(new FileReader(new File(QQMailLoginExample.class.getResource("timeout.js").getPath()))).eval();
+		engine.put("jsmodulbasepath", JsEngineFactory.class.getResource(""));
+		engine.eval(new FileReader(new File(JsEngineFactory.class.getResource("import.js").getPath())));
+		//engine.compile(new FileReader(new File(QQMailLoginExample.class.getResource("timeout.js").getPath()))).eval();
 		engine.put("httpClientContext", httpClientContext);
 		return engine;
 	}
